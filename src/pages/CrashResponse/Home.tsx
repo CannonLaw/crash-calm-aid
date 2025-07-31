@@ -32,10 +32,10 @@ export const Home = ({ onStartCrashReport }: HomeProps) => {
             alt="Crash Genius Logo" 
             className="w-24 h-24 mx-auto mb-6"
           />
-          <h1 className="text-2xl font-bold text-foreground mb-2">
-            <div><span className="text-primary">CRASH</span> GENIUS</div>
-            <div>from</div>
-            <div>CANNON <span className="text-primary">LAW</span></div>
+          <h1 className="font-bold text-foreground mb-2">
+            <div className="text-4xl"><span className="text-primary">CRASH</span> GENIUS</div>
+            <div className="text-2xl">from</div>
+            <div className="text-4xl">CANNON <span className="text-primary">LAW</span></div>
           </h1>
           <p className="text-muted-foreground">
             Start a Crash Report for a step by step guide to handling a motor vehicle collision.
