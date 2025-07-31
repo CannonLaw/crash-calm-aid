@@ -21,7 +21,7 @@ export const Header = ({ onHomeClick }: HeaderProps) => {
           aria-label="Return to home page"
         >
           <img 
-            src={logo} 
+            src={`${logo}?v=${Date.now()}`}
             alt="Crash Genius Logo" 
             className="h-16 w-auto"
           />
