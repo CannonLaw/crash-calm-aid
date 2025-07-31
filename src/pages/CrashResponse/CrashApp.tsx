@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Header } from "@/components/Header";
 import { Home } from "./Home";
 import { SafetyCheck } from "./SafetyCheck";
 import { EmergencyContacts } from "./EmergencyContacts";
@@ -47,6 +48,17 @@ export const CrashApp = () => {
     });
   };
 
+  const handleLogoClick = () => {
+    setCurrentState('home');
+    // Reset user responses when returning to home
+    setUserResponses({
+      safetyStatus: '',
+      emergencyContactNotified: false,
+      authoritiesChoice: '',
+      collectedInfo: {}
+    });
+  };
+
   const handleEmergencyContacts = () => {
     setCurrentState('authorities');
   };
@@ -72,6 +84,7 @@ export const CrashApp = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <Header onHomeClick={handleLogoClick} />
       {renderCurrentScreen()}
     </div>
   );
