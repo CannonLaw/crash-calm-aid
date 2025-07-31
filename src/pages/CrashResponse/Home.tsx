@@ -37,6 +37,20 @@ export const Home = ({ onStartCrashReport }: HomeProps) => {
           </p>
         </div>
 
+        {/* Main Action */}
+        <div className="mb-8">
+          <PrimaryActionButton 
+            onClick={onStartCrashReport}
+            icon={AlertTriangle}
+            className="mb-6 text-xl py-6"
+          >
+            Start Crash Report
+          </PrimaryActionButton>
+          <p className="text-sm text-muted-foreground text-center mb-8">
+            Begin the guided accident documentation process
+          </p>
+        </div>
+
         {/* Emergency Section */}
         {showEmergencyConfirm ? (
           <Card className="p-6 mb-6 border-destructive">
@@ -76,52 +90,6 @@ export const Home = ({ onStartCrashReport }: HomeProps) => {
           </Card>
         )}
 
-        {/* Main Action */}
-        <div className="mb-8">
-          <PrimaryActionButton 
-            onClick={onStartCrashReport}
-            icon={AlertTriangle}
-            className="mb-4"
-          >
-            Start Crash Report
-          </PrimaryActionButton>
-          <p className="text-sm text-muted-foreground text-center">
-            Begin the guided accident documentation process
-          </p>
-        </div>
-
-        {/* Quick Access */}
-        <div className="space-y-3">
-          <h3 className="text-lg font-semibold mb-4">Quick Access</h3>
-          
-          <Button variant="outline" className="w-full justify-start h-12">
-            <FileText className="w-5 h-5 mr-3" />
-            Previous Reports
-          </Button>
-          
-          <Button variant="outline" className="w-full justify-start h-12">
-            <Users className="w-5 h-5 mr-3" />
-            Emergency Contacts
-          </Button>
-          
-          <Button variant="outline" className="w-full justify-start h-12">
-            <Settings className="w-5 h-5 mr-3" />
-            Settings
-          </Button>
-        </div>
-
-        {/* Auto-Detection Notice */}
-        <Card className="mt-8 p-4 bg-secondary">
-          <div className="flex items-start space-x-3">
-            <AlertTriangle className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
-            <div className="text-sm">
-              <p className="font-medium mb-1">Auto-Detection Active</p>
-              <p className="text-muted-foreground">
-                This app can detect potential crashes using your phone's sensors and will notify you automatically.
-              </p>
-            </div>
-          </div>
-        </Card>
       </div>
     </div>
   );
