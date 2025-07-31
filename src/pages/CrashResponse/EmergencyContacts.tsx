@@ -48,7 +48,7 @@ export const EmergencyContacts = ({ onNext }: EmergencyContactsProps) => {
               <Users className="w-8 h-8 text-primary" />
             </div>
             <h1 className="text-2xl font-bold text-foreground mb-2">
-              Notify Your Contact
+              Notify Someone
             </h1>
             <p className="text-muted-foreground">
               Let someone know about the accident
