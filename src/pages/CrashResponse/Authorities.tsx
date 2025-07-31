@@ -65,9 +65,6 @@ export const Authorities = ({ onNext }: AuthoritiesProps) => {
               <div className="text-center mb-4">
                 <ShieldCheck className="w-8 h-8 text-primary mx-auto mb-2" />
                 <h3 className="font-semibold text-lg">Non-Emergency Contact</h3>
-                <p className="text-sm text-muted-foreground mb-2">
-                  For property damage without injuries
-                </p>
               </div>
               <Button
                 onClick={handleNonEmergency}
@@ -82,17 +79,13 @@ export const Authorities = ({ onNext }: AuthoritiesProps) => {
             {/* Skip Option */}
             <Card className="p-6 bg-secondary">
               <div className="text-center mb-4">
-                <h3 className="font-semibold">No Injuries or Danger</h3>
-                <p className="text-sm text-muted-foreground mb-3">
-                  Minor accident with no immediate police response needed
-                </p>
-                <p className="text-xs text-muted-foreground bg-background p-2 rounded border">
-                  ⚠️ Note: Some jurisdictions legally require police notification for any accident. Check your local laws.
-                </p>
               </div>
               <PrimaryActionButton onClick={() => onNext("skip")}>
                 Continue Without Authorities
               </PrimaryActionButton>
+              <p className="text-xs text-muted-foreground bg-background p-2 rounded border mt-4">
+                ⚠️ Note: Some jurisdictions legally require police notification for any accident. Check your local laws.
+              </p>
             </Card>
           </div>
 
