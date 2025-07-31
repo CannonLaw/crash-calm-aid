@@ -30,10 +30,11 @@ export const ReportGeneration = ({ collectedInfo, onComplete }: ReportGeneration
       const pdf = new jsPDF();
       const pageWidth = pdf.internal.pageSize.width;
       const pageHeight = pdf.internal.pageSize.height;
+      const margin = 10;
       
       // Add header image to first page
       const img = new Image();
-      img.onload = () => {
+      img.onload = async () => {
         // Add header image (scaled to fit page width)
         const imgWidth = pageWidth - 20; // 10mm margin on each side
         const imgHeight = (img.height / img.width) * imgWidth;
@@ -43,68 +44,199 @@ export const ReportGeneration = ({ collectedInfo, onComplete }: ReportGeneration
         let yPosition = imgHeight + 30;
         
         pdf.setFontSize(20);
-        pdf.text('Car Accident Report', 10, yPosition);
+        pdf.text('Car Accident Report', margin, yPosition);
         yPosition += 15;
         
-        pdf.setFontSize(12);
-        pdf.text(`Date: ${currentDate}`, 10, yPosition);
-        yPosition += 8;
-        pdf.text(`Time: ${currentTime}`, 10, yPosition);
-        yPosition += 8;
-        pdf.text(`Location: ${collectedInfo?.accidentDetails?.location || 'Not specified'}`, 10, yPosition);
-        yPosition += 15;
-        
-        // Add other drivers section
+        // Accident details section
         pdf.setFontSize(14);
-        pdf.text('Other Drivers Involved:', 10, yPosition);
+        pdf.text('Accident Details', margin, yPosition);
         yPosition += 10;
         pdf.setFontSize(10);
         
-        const otherDrivers = collectedInfo?.otherDrivers?.filter((d: any) => d.name) || [];
-        if (otherDrivers.length === 0) {
-          pdf.text('No other drivers involved', 10, yPosition);
+        const accidentDateTime = collectedInfo?.accidentDetails?.dateTime 
+          ? new Date(collectedInfo.accidentDetails.dateTime).toLocaleString()
+          : `${currentDate} ${currentTime}`;
+        pdf.text(`Date & Time: ${accidentDateTime}`, margin, yPosition);
+        yPosition += 6;
+        pdf.text(`Location: ${collectedInfo?.accidentDetails?.location || 'Not specified'}`, margin, yPosition);
+        yPosition += 6;
+        
+        if (collectedInfo?.accidentDetails?.description) {
+          yPosition += 3;
+          pdf.text('Description:', margin, yPosition);
+          yPosition += 6;
+          const descriptionLines = pdf.splitTextToSize(collectedInfo.accidentDetails.description, pageWidth - 40);
+          pdf.text(descriptionLines, margin + 5, yPosition);
+          yPosition += descriptionLines.length * 6;
+        }
+        yPosition += 10;
+        
+        // Your information section
+        pdf.setFontSize(14);
+        pdf.text('Your Information', margin, yPosition);
+        yPosition += 10;
+        pdf.setFontSize(10);
+        
+        const userInfo = collectedInfo?.userInfo || {};
+        if (userInfo.name) pdf.text(`Name: ${userInfo.name}`, margin, yPosition), yPosition += 6;
+        if (userInfo.phone) pdf.text(`Phone: ${userInfo.phone}`, margin, yPosition), yPosition += 6;
+        if (userInfo.license) pdf.text(`License: ${userInfo.license}`, margin, yPosition), yPosition += 6;
+        if (userInfo.insurance) pdf.text(`Insurance: ${userInfo.insurance}`, margin, yPosition), yPosition += 6;
+        if (userInfo.policy) pdf.text(`Policy: ${userInfo.policy}`, margin, yPosition), yPosition += 6;
+        yPosition += 8;
+        
+        // Check if we need a new page
+        if (yPosition > pageHeight - 80) {
+          pdf.addPage();
+          yPosition = 20;
+        }
+        
+        // Vehicles section
+        pdf.setFontSize(14);
+        pdf.text('Vehicles Involved', margin, yPosition);
+        yPosition += 10;
+        pdf.setFontSize(10);
+        
+        const vehicles = collectedInfo?.vehicles?.filter((v: any) => v.make || v.model) || [];
+        if (vehicles.length === 0) {
+          pdf.text('No vehicle information recorded', margin, yPosition);
           yPosition += 8;
         } else {
-          otherDrivers.forEach((driver: any, index: number) => {
-            pdf.text(`Driver ${index + 1}: ${driver.name}`, 10, yPosition);
+          vehicles.forEach((vehicle: any, index: number) => {
+            const vehicleInfo = `${vehicle.make || ''} ${vehicle.model || ''} ${vehicle.color || ''}`.trim();
+            pdf.text(`Vehicle ${index + 1}: ${vehicleInfo}`, margin, yPosition);
             yPosition += 6;
-            if (driver.phone) {
-              pdf.text(`Phone: ${driver.phone}`, 15, yPosition);
+            if (vehicle.plate) {
+              pdf.text(`License Plate: ${vehicle.plate}`, margin + 5, yPosition);
               yPosition += 6;
             }
-            if (driver.insurance) {
-              pdf.text(`Insurance: ${driver.insurance}`, 15, yPosition);
+            if (vehicle.associatedDriver) {
+              pdf.text(`Associated Driver: ${vehicle.associatedDriver}`, margin + 5, yPosition);
               yPosition += 6;
             }
             yPosition += 4;
           });
         }
         
-        // Add witnesses section
+        // Other drivers section
         yPosition += 5;
         pdf.setFontSize(14);
-        pdf.text('Witnesses:', 10, yPosition);
+        pdf.text('Other Drivers Involved', margin, yPosition);
         yPosition += 10;
         pdf.setFontSize(10);
         
-        const witnesses = collectedInfo?.witnesses?.filter((w: any) => w.name) || [];
-        if (witnesses.length === 0) {
-          pdf.text('No witnesses present', 10, yPosition);
+        const otherDrivers = collectedInfo?.otherDrivers?.filter((d: any) => d.name) || [];
+        if (collectedInfo?.noOtherDrivers) {
+          pdf.text('Single car accident - no other drivers involved', margin, yPosition);
+          yPosition += 8;
+        } else if (otherDrivers.length === 0) {
+          pdf.text('No other driver information recorded', margin, yPosition);
           yPosition += 8;
         } else {
-          witnesses.forEach((witness: any, index: number) => {
-            pdf.text(`Witness ${index + 1}: ${witness.name}`, 10, yPosition);
+          otherDrivers.forEach((driver: any, index: number) => {
+            pdf.text(`Driver ${index + 1}: ${driver.name}`, margin, yPosition);
             yPosition += 6;
-            if (witness.phone) {
-              pdf.text(`Phone: ${witness.phone}`, 15, yPosition);
+            if (driver.phone) {
+              pdf.text(`Phone: ${driver.phone}`, margin + 5, yPosition);
               yPosition += 6;
             }
-            if (witness.description) {
-              pdf.text(`Description: ${witness.description}`, 15, yPosition);
+            if (driver.license) {
+              pdf.text(`License: ${driver.license}`, margin + 5, yPosition);
+              yPosition += 6;
+            }
+            if (driver.insurance) {
+              pdf.text(`Insurance: ${driver.insurance}`, margin + 5, yPosition);
+              yPosition += 6;
+            }
+            if (driver.policy) {
+              pdf.text(`Policy: ${driver.policy}`, margin + 5, yPosition);
               yPosition += 6;
             }
             yPosition += 4;
           });
+        }
+        
+        // Check if we need a new page
+        if (yPosition > pageHeight - 80) {
+          pdf.addPage();
+          yPosition = 20;
+        }
+        
+        // Witnesses section
+        yPosition += 5;
+        pdf.setFontSize(14);
+        pdf.text('Witnesses', margin, yPosition);
+        yPosition += 10;
+        pdf.setFontSize(10);
+        
+        const witnesses = collectedInfo?.witnesses?.filter((w: any) => w.name) || [];
+        if (collectedInfo?.noWitnesses) {
+          pdf.text('No witnesses present', margin, yPosition);
+          yPosition += 8;
+        } else if (witnesses.length === 0) {
+          pdf.text('No witness information recorded', margin, yPosition);
+          yPosition += 8;
+        } else {
+          witnesses.forEach((witness: any, index: number) => {
+            pdf.text(`Witness ${index + 1}: ${witness.name}`, margin, yPosition);
+            yPosition += 6;
+            if (witness.contact) {
+              pdf.text(`Contact: ${witness.contact}`, margin + 5, yPosition);
+              yPosition += 6;
+            }
+            if (witness.description) {
+              pdf.text(`Description: ${witness.description}`, margin + 5, yPosition);
+              yPosition += 6;
+            }
+            yPosition += 4;
+          });
+        }
+        
+        // Photos section
+        const photos = collectedInfo?.photos?.filter((p: any) => p.dataUrl) || [];
+        if (photos.length > 0) {
+          yPosition += 10;
+          
+          // Check if we need a new page for photos
+          if (yPosition > pageHeight - 100) {
+            pdf.addPage();
+            yPosition = 20;
+          }
+          
+          pdf.setFontSize(14);
+          pdf.text('Photos', margin, yPosition);
+          yPosition += 10;
+          
+          // Process photos
+          for (let i = 0; i < photos.length; i++) {
+            const photo = photos[i];
+            
+            // Check if we need a new page
+            if (yPosition > pageHeight - 120) {
+              pdf.addPage();
+              yPosition = 20;
+            }
+            
+            // Add photo description
+            pdf.setFontSize(10);
+            const photoTitle = photo.description || `${photo.type.replace('-', ' ')} photo`;
+            pdf.text(`${i + 1}. ${photoTitle}`, margin, yPosition);
+            yPosition += 8;
+            
+            // Add photo if dataUrl exists
+            if (photo.dataUrl) {
+              try {
+                const photoWidth = 80;
+                const photoHeight = 60;
+                pdf.addImage(photo.dataUrl, 'JPEG', margin, yPosition, photoWidth, photoHeight);
+                yPosition += photoHeight + 10;
+              } catch (error) {
+                console.error('Error adding photo to PDF:', error);
+                pdf.text('Photo could not be included', margin + 5, yPosition);
+                yPosition += 6;
+              }
+            }
+          }
         }
         
         // Add footer disclaimer
@@ -166,7 +298,12 @@ export const ReportGeneration = ({ collectedInfo, onComplete }: ReportGeneration
             <div className="space-y-3 text-sm">
               <div className="flex items-center justify-between">
                 <span className="text-muted-foreground">Date & Time:</span>
-                <span className="font-medium">{currentDate} {currentTime}</span>
+                <span className="font-medium">
+                  {collectedInfo?.accidentDetails?.dateTime 
+                    ? new Date(collectedInfo.accidentDetails.dateTime).toLocaleString()
+                    : `${currentDate} ${currentTime}`
+                  }
+                </span>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-muted-foreground">Location:</span>
@@ -175,15 +312,35 @@ export const ReportGeneration = ({ collectedInfo, onComplete }: ReportGeneration
                 </span>
               </div>
               <div className="flex items-center justify-between">
+                <span className="text-muted-foreground">Your Info:</span>
+                <span className="font-medium">
+                  {collectedInfo?.userInfo?.name ? 'Complete' : 'Incomplete'}
+                </span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-muted-foreground">Vehicles:</span>
+                <span className="font-medium">
+                  {collectedInfo?.vehicles?.filter((v: any) => v.make || v.model).length || 0}
+                </span>
+              </div>
+              <div className="flex items-center justify-between">
                 <span className="text-muted-foreground">Other Drivers:</span>
                 <span className="font-medium">
-                  {collectedInfo?.otherDrivers?.filter((d: any) => d.name).length || 0}
+                  {collectedInfo?.noOtherDrivers ? 'None (single car)' : 
+                   collectedInfo?.otherDrivers?.filter((d: any) => d.name).length || 0}
                 </span>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-muted-foreground">Witnesses:</span>
                 <span className="font-medium">
-                  {collectedInfo?.witnesses?.filter((w: any) => w.name).length || 0}
+                  {collectedInfo?.noWitnesses ? 'None' :
+                   collectedInfo?.witnesses?.filter((w: any) => w.name).length || 0}
+                </span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-muted-foreground">Photos:</span>
+                <span className="font-medium">
+                  {collectedInfo?.photos?.filter((p: any) => p.dataUrl).length || 0}
                 </span>
               </div>
             </div>
