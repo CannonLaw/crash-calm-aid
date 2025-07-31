@@ -58,7 +58,7 @@ export const EmergencyContacts = ({ onNext }: EmergencyContactsProps) => {
           {/* Emergency Contact Card */}
           <Card className="p-6 mb-6">
             <div className="text-center mb-6">
-              <h3 className="text-lg font-semibold mb-2">Emergency Contact</h3>
+              <h3 className="text-lg font-semibold mb-2">Contact</h3>
               <div className="bg-secondary rounded-lg p-4">
                 <p className="font-medium text-lg">{emergencyContact.name}</p>
                 <p className="text-muted-foreground">{emergencyContact.relationship}</p>
@@ -73,7 +73,7 @@ export const EmergencyContacts = ({ onNext }: EmergencyContactsProps) => {
                 className="w-full h-12 text-base"
               >
                 <Phone className="w-5 h-5 mr-3" />
-                Call {emergencyContact.name}
+                Make a Call
               </Button>
 
               <Button
@@ -82,7 +82,7 @@ export const EmergencyContacts = ({ onNext }: EmergencyContactsProps) => {
                 className="w-full h-12 text-base"
               >
                 <MessageSquare className="w-5 h-5 mr-3" />
-                Send Text Message
+                Send a Text Message
               </Button>
             </div>
 
