@@ -64,14 +64,10 @@ export const Authorities = ({ onNext }: AuthoritiesProps) => {
             <Card className="p-6">
               <div className="text-center mb-4">
                 <ShieldCheck className="w-8 h-8 text-primary mx-auto mb-2" />
-                <h3 className="font-semibold text-lg">Non-Emergency Police</h3>
+                <h3 className="font-semibold text-lg">Non-Emergency Contact</h3>
                 <p className="text-sm text-muted-foreground mb-2">
                   For property damage without injuries
                 </p>
-                <div className="flex items-center justify-center text-xs text-muted-foreground">
-                  <MapPin className="w-3 h-3 mr-1" />
-                  Based on your location
-                </div>
               </div>
               <Button
                 onClick={handleNonEmergency}
@@ -79,7 +75,7 @@ export const Authorities = ({ onNext }: AuthoritiesProps) => {
                 className="w-full h-12 text-base font-medium"
               >
                 <Phone className="w-5 h-5 mr-3" />
-                Call Non-Emergency Line
+                Call 311
               </Button>
             </Card>
 
