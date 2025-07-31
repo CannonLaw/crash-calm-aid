@@ -2,6 +2,9 @@ import { useState } from "react";
 import { Home } from "./Home";
 import { SafetyCheck } from "./SafetyCheck";
 import { EmergencyContacts } from "./EmergencyContacts";
+import { Authorities } from "./Authorities";
+import { InformationGathering } from "./InformationGathering";
+import { ReportGeneration } from "./ReportGeneration";
 
 type AppState = 'home' | 'safety-check' | 'emergency-contacts' | 'authorities' | 'information' | 'report';
 
@@ -10,7 +13,7 @@ export const CrashApp = () => {
   const [userResponses, setUserResponses] = useState({
     safetyStatus: '',
     emergencyContactNotified: false,
-    authoritiesNeeded: '',
+    authoritiesChoice: '',
     collectedInfo: {}
   });
 
@@ -21,6 +24,27 @@ export const CrashApp = () => {
   const handleSafetyCheck = (safetyStatus: 'safe' | 'moving' | 'emergency') => {
     setUserResponses(prev => ({ ...prev, safetyStatus }));
     setCurrentState('emergency-contacts');
+  };
+
+  const handleAuthorities = (authoritiesChoice: 'emergency' | 'non-emergency' | 'skip') => {
+    setUserResponses(prev => ({ ...prev, authoritiesChoice }));
+    setCurrentState('information');
+  };
+
+  const handleInformationGathering = (collectedInfo: any) => {
+    setUserResponses(prev => ({ ...prev, collectedInfo }));
+    setCurrentState('report');
+  };
+
+  const handleReportComplete = () => {
+    setCurrentState('home');
+    // Reset user responses for next use
+    setUserResponses({
+      safetyStatus: '',
+      emergencyContactNotified: false,
+      authoritiesChoice: '',
+      collectedInfo: {}
+    });
   };
 
   const handleEmergencyContacts = () => {
@@ -35,6 +59,12 @@ export const CrashApp = () => {
         return <SafetyCheck onNext={handleSafetyCheck} />;
       case 'emergency-contacts':
         return <EmergencyContacts onNext={handleEmergencyContacts} />;
+      case 'authorities':
+        return <Authorities onNext={handleAuthorities} />;
+      case 'information':
+        return <InformationGathering onNext={handleInformationGathering} />;
+      case 'report':
+        return <ReportGeneration collectedInfo={userResponses.collectedInfo} onComplete={handleReportComplete} />;
       default:
         return <Home onStartCrashReport={handleStartCrashReport} />;
     }
