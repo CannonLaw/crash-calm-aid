@@ -15,7 +15,9 @@ import {
   Users, 
   Camera, 
   MapPin,
-  Check
+  Check,
+  Plus,
+  Trash2
 } from "lucide-react";
 
 interface InformationGatheringProps {
@@ -29,6 +31,7 @@ interface CollectedInfo {
   vehicles: any[];
   witnesses: any[];
   photos: string[];
+  noOtherDrivers: boolean;
   accidentDetails: {
     location: string;
     description: string;
@@ -40,10 +43,11 @@ export const InformationGathering = ({ onNext }: InformationGatheringProps) => {
   const [openSections, setOpenSections] = useState<Record<string, boolean>>({});
   const [completedSections, setCompletedSections] = useState<Record<string, boolean>>({});
   const [collectedInfo, setCollectedInfo] = useState<CollectedInfo>({
-    otherDrivers: [{ name: '', phone: '', license: '', insurance: '', policy: '' }],
-    vehicles: [{ make: '', model: '', color: '', plate: '', owner: 'other' }],
-    witnesses: [{ name: '', contact: '' }],
+    otherDrivers: [],
+    vehicles: [{ make: '', model: '', color: '', plate: '', associatedDriver: '' }],
+    witnesses: [],
     photos: [],
+    noOtherDrivers: false,
     accidentDetails: {
       location: '',
       description: '',
@@ -84,6 +88,56 @@ export const InformationGathering = ({ onNext }: InformationGatheringProps) => {
     }));
   };
 
+  const addOtherDriver = () => {
+    setCollectedInfo(prev => ({
+      ...prev,
+      otherDrivers: [...prev.otherDrivers, { name: '', phone: '', license: '', insurance: '', policy: '' }]
+    }));
+  };
+
+  const removeOtherDriver = (index: number) => {
+    setCollectedInfo(prev => ({
+      ...prev,
+      otherDrivers: prev.otherDrivers.filter((_, i) => i !== index)
+    }));
+  };
+
+  const addVehicle = () => {
+    setCollectedInfo(prev => ({
+      ...prev,
+      vehicles: [...prev.vehicles, { make: '', model: '', color: '', plate: '', associatedDriver: '' }]
+    }));
+  };
+
+  const removeVehicle = (index: number) => {
+    setCollectedInfo(prev => ({
+      ...prev,
+      vehicles: prev.vehicles.filter((_, i) => i !== index)
+    }));
+  };
+
+  const addWitness = () => {
+    setCollectedInfo(prev => ({
+      ...prev,
+      witnesses: [...prev.witnesses, { name: '', contact: '', description: '' }]
+    }));
+  };
+
+  const removeWitness = (index: number) => {
+    setCollectedInfo(prev => ({
+      ...prev,
+      witnesses: prev.witnesses.filter((_, i) => i !== index)
+    }));
+  };
+
+  const toggleNoOtherDrivers = () => {
+    setCollectedInfo(prev => ({
+      ...prev,
+      noOtherDrivers: !prev.noOtherDrivers,
+      otherDrivers: !prev.noOtherDrivers ? [] : prev.otherDrivers
+    }));
+  };
+
   const sections = [
     {
       id: 'drivers',
@@ -91,36 +145,75 @@ export const InformationGathering = ({ onNext }: InformationGatheringProps) => {
       icon: User,
       content: (
         <div className="space-y-4">
-          {collectedInfo.otherDrivers.map((driver, index) => (
-            <div key={index} className="space-y-3 border-b border-border pb-4 last:border-b-0">
-              <Input
-                placeholder="Full name"
-                value={driver.name}
-                onChange={(e) => updateOtherDriver(index, 'name', e.target.value)}
-              />
-              <Input
-                placeholder="Phone number"
-                type="tel"
-                value={driver.phone}
-                onChange={(e) => updateOtherDriver(index, 'phone', e.target.value)}
-              />
-              <Input
-                placeholder="License number"
-                value={driver.license}
-                onChange={(e) => updateOtherDriver(index, 'license', e.target.value)}
-              />
-              <Input
-                placeholder="Insurance company"
-                value={driver.insurance}
-                onChange={(e) => updateOtherDriver(index, 'insurance', e.target.value)}
-              />
-              <Input
-                placeholder="Policy number"
-                value={driver.policy}
-                onChange={(e) => updateOtherDriver(index, 'policy', e.target.value)}
-              />
-            </div>
-          ))}
+          <div className="flex items-center space-x-2 mb-4">
+            <input
+              type="checkbox"
+              id="no-other-drivers"
+              checked={collectedInfo.noOtherDrivers}
+              onChange={toggleNoOtherDrivers}
+              className="rounded border border-input"
+            />
+            <label htmlFor="no-other-drivers" className="text-sm font-medium">
+              No other drivers involved (single car accident)
+            </label>
+          </div>
+          
+          {!collectedInfo.noOtherDrivers && (
+            <>
+              {collectedInfo.otherDrivers.map((driver, index) => (
+                <div key={index} className="space-y-3 border border-border rounded-lg p-4">
+                  <div className="flex justify-between items-center mb-3">
+                    <h4 className="font-medium text-sm">Driver {index + 1}</h4>
+                    {collectedInfo.otherDrivers.length > 1 && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => removeOtherDriver(index)}
+                        className="h-8 w-8 p-0 text-destructive hover:text-destructive"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    )}
+                  </div>
+                  <Input
+                    placeholder="Full name"
+                    value={driver.name}
+                    onChange={(e) => updateOtherDriver(index, 'name', e.target.value)}
+                  />
+                  <Input
+                    placeholder="Phone number"
+                    type="tel"
+                    value={driver.phone}
+                    onChange={(e) => updateOtherDriver(index, 'phone', e.target.value)}
+                  />
+                  <Input
+                    placeholder="License number"
+                    value={driver.license}
+                    onChange={(e) => updateOtherDriver(index, 'license', e.target.value)}
+                  />
+                  <Input
+                    placeholder="Insurance company"
+                    value={driver.insurance}
+                    onChange={(e) => updateOtherDriver(index, 'insurance', e.target.value)}
+                  />
+                  <Input
+                    placeholder="Policy number"
+                    value={driver.policy}
+                    onChange={(e) => updateOtherDriver(index, 'policy', e.target.value)}
+                  />
+                </div>
+              ))}
+              
+              <Button
+                variant="outline"
+                onClick={addOtherDriver}
+                className="w-full"
+              >
+                <Plus className="w-4 h-4 mr-2" />
+                Add Another Driver
+              </Button>
+            </>
+          )}
         </div>
       )
     },
@@ -131,7 +224,20 @@ export const InformationGathering = ({ onNext }: InformationGatheringProps) => {
       content: (
         <div className="space-y-4">
           {collectedInfo.vehicles.map((vehicle, index) => (
-            <div key={index} className="space-y-3 border-b border-border pb-4 last:border-b-0">
+            <div key={index} className="space-y-3 border border-border rounded-lg p-4">
+              <div className="flex justify-between items-center mb-3">
+                <h4 className="font-medium text-sm">Vehicle {index + 1}</h4>
+                {collectedInfo.vehicles.length > 1 && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => removeVehicle(index)}
+                    className="h-8 w-8 p-0 text-destructive hover:text-destructive"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
+                )}
+              </div>
               <div className="grid grid-cols-2 gap-3">
                 <Input
                   placeholder="Make"
@@ -156,8 +262,22 @@ export const InformationGathering = ({ onNext }: InformationGatheringProps) => {
                   onChange={(e) => updateVehicle(index, 'plate', e.target.value)}
                 />
               </div>
+              <Input
+                placeholder="Associated driver (e.g., 'Driver 1', 'Your vehicle', etc.)"
+                value={vehicle.associatedDriver}
+                onChange={(e) => updateVehicle(index, 'associatedDriver', e.target.value)}
+              />
             </div>
           ))}
+          
+          <Button
+            variant="outline"
+            onClick={addVehicle}
+            className="w-full"
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            Add Another Vehicle
+          </Button>
         </div>
       )
     },
@@ -167,20 +287,51 @@ export const InformationGathering = ({ onNext }: InformationGatheringProps) => {
       icon: Users,
       content: (
         <div className="space-y-4">
-          {collectedInfo.witnesses.map((witness, index) => (
-            <div key={index} className="space-y-3 border-b border-border pb-4 last:border-b-0">
-              <Input
-                placeholder="Witness name"
-                value={witness.name}
-                onChange={(e) => updateWitness(index, 'name', e.target.value)}
-              />
-              <Input
-                placeholder="Contact information"
-                value={witness.contact}
-                onChange={(e) => updateWitness(index, 'contact', e.target.value)}
-              />
-            </div>
-          ))}
+          {collectedInfo.witnesses.length === 0 ? (
+            <p className="text-sm text-muted-foreground text-center py-4">
+              No witnesses recorded yet
+            </p>
+          ) : (
+            collectedInfo.witnesses.map((witness, index) => (
+              <div key={index} className="space-y-3 border border-border rounded-lg p-4">
+                <div className="flex justify-between items-center mb-3">
+                  <h4 className="font-medium text-sm">Witness {index + 1}</h4>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => removeWitness(index)}
+                    className="h-8 w-8 p-0 text-destructive hover:text-destructive"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
+                </div>
+                <Input
+                  placeholder="Witness name"
+                  value={witness.name}
+                  onChange={(e) => updateWitness(index, 'name', e.target.value)}
+                />
+                <Input
+                  placeholder="Contact information"
+                  value={witness.contact}
+                  onChange={(e) => updateWitness(index, 'contact', e.target.value)}
+                />
+                <Input
+                  placeholder="Description (e.g., passenger, bystander, pedestrian)"
+                  value={witness.description}
+                  onChange={(e) => updateWitness(index, 'description', e.target.value)}
+                />
+              </div>
+            ))
+          )}
+          
+          <Button
+            variant="outline"
+            onClick={addWitness}
+            className="w-full"
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            Add Witness
+          </Button>
         </div>
       )
     },
