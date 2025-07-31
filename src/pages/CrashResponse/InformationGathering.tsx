@@ -1,24 +1,28 @@
-import { useState } from "react";
-import { ProgressIndicator } from "@/components/CrashApp/ProgressIndicator";
-import { PrimaryActionButton } from "@/components/CrashApp/PrimaryActionButton";
-import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import React, { useState } from 'react';
+import { Card } from '@/components/ui/card';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import { 
+  User, 
+  Users, 
+  Car, 
+  Eye, 
+  Camera, 
   FileText, 
   ChevronDown, 
   ChevronRight, 
-  User, 
-  Car, 
-  Users, 
-  Camera, 
-  MapPin,
+  Plus, 
+  Trash2,
   Check,
-  Plus,
-  Trash2
-} from "lucide-react";
+  MapPin
+} from 'lucide-react';
+import { ProgressIndicator } from '@/components/CrashApp/ProgressIndicator';
+import { PrimaryActionButton } from '@/components/CrashApp/PrimaryActionButton';
+import { PhotoGrid } from '@/components/CrashApp/PhotoCapture/PhotoGrid';
+import { PhotoModal } from '@/components/CrashApp/PhotoCapture/PhotoModal';
+import { PhotoData } from '@/components/CrashApp/PhotoCapture/PhotoUtils';
 
 interface InformationGatheringProps {
   onNext: (collectedInfo: any) => void;
@@ -37,7 +41,7 @@ interface CollectedInfo {
   otherDrivers: any[];
   vehicles: any[];
   witnesses: any[];
-  photos: { id: string; type: string; description: string }[];
+  photos: PhotoData[];
   noOtherDrivers: boolean;
   noOtherVehicles: boolean;
   noWitnesses: boolean;
@@ -48,9 +52,11 @@ interface CollectedInfo {
   };
 }
 
-export const InformationGathering = ({ onNext }: InformationGatheringProps) => {
+export const InformationGathering: React.FC<InformationGatheringProps> = ({ onNext }) => {
   const [openSections, setOpenSections] = useState<Record<string, boolean>>({});
   const [completedSections, setCompletedSections] = useState<Record<string, boolean>>({});
+  const [selectedPhoto, setSelectedPhoto] = useState<PhotoData | null>(null);
+  const [isPhotoModalOpen, setIsPhotoModalOpen] = useState(false);
   const [collectedInfo, setCollectedInfo] = useState<CollectedInfo>({
     userInfo: {
       name: '',
@@ -179,11 +185,28 @@ export const InformationGathering = ({ onNext }: InformationGatheringProps) => {
     }));
   };
 
-  const addPhoto = () => {
-    const newPhoto = {
+  const handlePhotoCapture = (photo: PhotoData) => {
+    setCollectedInfo(prev => ({
+      ...prev,
+      photos: [...prev.photos.filter(p => p.type !== photo.type), photo]
+    }));
+  };
+
+  const handlePhotoRemove = (photoId: string) => {
+    setCollectedInfo(prev => ({
+      ...prev,
+      photos: prev.photos.filter(photo => photo.id !== photoId)
+    }));
+  };
+
+  const addAdditionalPhoto = () => {
+    const newPhoto: PhotoData = {
       id: Date.now().toString(),
       type: 'additional',
-      description: ''
+      description: '',
+      file: null,
+      dataUrl: '',
+      timestamp: new Date().toISOString()
     };
     setCollectedInfo(prev => ({
       ...prev,
@@ -191,20 +214,18 @@ export const InformationGathering = ({ onNext }: InformationGatheringProps) => {
     }));
   };
 
-  const removePhoto = (photoId: string) => {
-    setCollectedInfo(prev => ({
-      ...prev,
-      photos: prev.photos.filter(photo => photo.id !== photoId)
-    }));
-  };
-
-  const updatePhoto = (photoId: string, description: string) => {
+  const updatePhotoDescription = (photoId: string, description: string) => {
     setCollectedInfo(prev => ({
       ...prev,
       photos: prev.photos.map(photo => 
         photo.id === photoId ? { ...photo, description } : photo
       )
     }));
+  };
+
+  const viewPhoto = (photo: PhotoData) => {
+    setSelectedPhoto(photo);
+    setIsPhotoModalOpen(true);
   };
 
   const sections = [
@@ -478,43 +499,39 @@ export const InformationGathering = ({ onNext }: InformationGatheringProps) => {
       title: 'Photos',
       icon: Camera,
       content: (
-        <div className="space-y-4">
-          <div className="grid grid-cols-2 gap-3">
-            <Button variant="outline" className="h-20 flex-col">
-              <Camera className="w-6 h-6 mb-1" />
-              <span className="text-xs">Vehicle Damage</span>
-            </Button>
-            <Button variant="outline" className="h-20 flex-col">
-              <Camera className="w-6 h-6 mb-1" />
-              <span className="text-xs">Accident Scene</span>
-            </Button>
-            <Button variant="outline" className="h-20 flex-col">
-              <Camera className="w-6 h-6 mb-1" />
-              <span className="text-xs">License/Insurance</span>
-            </Button>
-            <Button variant="outline" className="h-20 flex-col">
-              <Camera className="w-6 h-6 mb-1" />
-              <span className="text-xs">Other Vehicle</span>
-            </Button>
-          </div>
+        <div className="space-y-6">
+          <PhotoGrid
+            photos={collectedInfo.photos}
+            onPhotoCapture={handlePhotoCapture}
+            onPhotoRemove={handlePhotoRemove}
+          />
 
           {/* Additional Photos */}
-          {collectedInfo.photos.length > 0 && (
+          {collectedInfo.photos.filter(p => p.type === 'additional').length > 0 && (
             <div className="space-y-3">
               <h4 className="font-medium text-sm">Additional Photos</h4>
-              {collectedInfo.photos.map((photo) => (
+              {collectedInfo.photos.filter(p => p.type === 'additional').map((photo) => (
                 <div key={photo.id} className="flex items-center space-x-3 border border-border rounded-lg p-3">
-                  <Camera className="w-5 h-5 text-muted-foreground" />
+                  {photo.dataUrl ? (
+                    <img
+                      src={photo.dataUrl}
+                      alt="Additional photo"
+                      className="w-12 h-12 object-cover rounded cursor-pointer"
+                      onClick={() => viewPhoto(photo)}
+                    />
+                  ) : (
+                    <Camera className="w-5 h-5 text-muted-foreground" />
+                  )}
                   <Input
                     placeholder="Photo description"
                     value={photo.description}
-                    onChange={(e) => updatePhoto(photo.id, e.target.value)}
+                    onChange={(e) => updatePhotoDescription(photo.id, e.target.value)}
                     className="flex-1"
                   />
                   <Button
                     variant="ghost"
                     size="sm"
-                    onClick={() => removePhoto(photo.id)}
+                    onClick={() => handlePhotoRemove(photo.id)}
                     className="h-8 w-8 p-0 text-destructive hover:text-destructive"
                   >
                     <Trash2 className="w-4 h-4" />
@@ -524,10 +541,10 @@ export const InformationGathering = ({ onNext }: InformationGatheringProps) => {
             </div>
           )}
 
-          {/* Add Photo Button */}
+          {/* Add Additional Photo Button */}
           <Button
             variant="outline"
-            onClick={addPhoto}
+            onClick={addAdditionalPhoto}
             className="w-full"
           >
             <Plus className="w-4 h-4 mr-2" />
@@ -652,6 +669,15 @@ export const InformationGathering = ({ onNext }: InformationGatheringProps) => {
           <PrimaryActionButton onClick={() => onNext(collectedInfo)}>
             Generate Report
           </PrimaryActionButton>
+
+          <PhotoModal
+            photo={selectedPhoto}
+            isOpen={isPhotoModalOpen}
+            onClose={() => {
+              setIsPhotoModalOpen(false);
+              setSelectedPhoto(null);
+            }}
+          />
 
           {/* Auto-save indicator */}
           <p className="text-center text-sm text-muted-foreground mt-4">
