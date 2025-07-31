@@ -89,19 +89,6 @@ export const Authorities = ({ onNext }: AuthoritiesProps) => {
             </Card>
           </div>
 
-          {/* Information */}
-          <Card className="p-4 bg-secondary">
-            <div className="text-sm">
-              <p className="font-medium mb-2">When to call authorities:</p>
-              <ul className="space-y-1 text-muted-foreground">
-                <li>• Any injuries, no matter how minor</li>
-                <li>• Significant property damage</li>
-                <li>• Disagreement about what happened</li>
-                <li>• Hit and run incident</li>
-                <li>• Driver appears impaired</li>
-              </ul>
-            </div>
-          </Card>
         </div>
       </div>
     </div>
