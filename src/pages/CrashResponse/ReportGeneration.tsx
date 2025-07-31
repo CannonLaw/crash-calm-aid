@@ -27,7 +27,7 @@ export const ReportGeneration = ({ collectedInfo, onComplete }: ReportGeneration
   const currentTime = new Date().toLocaleTimeString();
 
   const generatePDF = async (): Promise<Blob> => {
-    return new Promise((resolve, reject) => {
+    return new Promise(async (resolve, reject) => {
       const pdf = new jsPDF();
       const pageWidth = pdf.internal.pageSize.width;
       const pageHeight = pdf.internal.pageSize.height;
@@ -35,261 +35,274 @@ export const ReportGeneration = ({ collectedInfo, onComplete }: ReportGeneration
       
       // Add header image to first page
       const img = new Image();
-      img.onload = () => {
-        // Add header image (scaled to fit page width)
-        const imgWidth = pageWidth - 20; // 10mm margin on each side
-        const imgHeight = (img.height / img.width) * imgWidth;
-        pdf.addImage(headerImage, 'PNG', 10, 10, imgWidth, imgHeight);
-        
-        // Add report content
-        let yPosition = imgHeight + 30;
-        
-        pdf.setFontSize(20);
-        pdf.text('Car Accident Report', margin, yPosition);
-        yPosition += 15;
-        
-        // Accident details section
-        pdf.setFontSize(14);
-        pdf.text('Accident Details', margin, yPosition);
-        yPosition += 10;
-        pdf.setFontSize(10);
-        
-        const accidentDateTime = collectedInfo?.accidentDetails?.dateTime 
-          ? new Date(collectedInfo.accidentDetails.dateTime).toLocaleString()
-          : `${currentDate} ${currentTime}`;
-        pdf.text(`Date & Time: ${accidentDateTime}`, margin, yPosition);
-        yPosition += 6;
-        pdf.text(`Location: ${collectedInfo?.accidentDetails?.location || 'Not specified'}`, margin, yPosition);
-        yPosition += 6;
-        
-        if (collectedInfo?.accidentDetails?.description) {
-          yPosition += 3;
-          pdf.text('Description:', margin, yPosition);
+      img.onload = async () => {
+        try {
+          // Add header image (scaled to fit page width)
+          const imgWidth = pageWidth - 20; // 10mm margin on each side
+          const imgHeight = (img.height / img.width) * imgWidth;
+          pdf.addImage(headerImage, 'PNG', 10, 10, imgWidth, imgHeight);
+          
+          // Add report content
+          let yPosition = imgHeight + 30;
+          
+          pdf.setFontSize(20);
+          pdf.text('Car Accident Report', margin, yPosition);
+          yPosition += 15;
+          
+          // Accident details section
+          pdf.setFontSize(14);
+          pdf.text('Accident Details', margin, yPosition);
+          yPosition += 10;
+          pdf.setFontSize(10);
+          
+          const accidentDateTime = collectedInfo?.accidentDetails?.dateTime 
+            ? new Date(collectedInfo.accidentDetails.dateTime).toLocaleString()
+            : `${currentDate} ${currentTime}`;
+          pdf.text(`Date & Time: ${accidentDateTime}`, margin, yPosition);
           yPosition += 6;
-          const descriptionLines = pdf.splitTextToSize(collectedInfo.accidentDetails.description, pageWidth - 40);
-          pdf.text(descriptionLines, margin + 5, yPosition);
-          yPosition += descriptionLines.length * 6;
-        }
-        yPosition += 10;
-        
-        // Your information section
-        pdf.setFontSize(14);
-        pdf.text('Your Information', margin, yPosition);
-        yPosition += 10;
-        pdf.setFontSize(10);
-        
-        const userInfo = collectedInfo?.userInfo || {};
-        if (userInfo.name) pdf.text(`Name: ${userInfo.name}`, margin, yPosition), yPosition += 6;
-        if (userInfo.phone) pdf.text(`Phone: ${userInfo.phone}`, margin, yPosition), yPosition += 6;
-        if (userInfo.license) pdf.text(`License: ${userInfo.license}`, margin, yPosition), yPosition += 6;
-        if (userInfo.insurance) pdf.text(`Insurance: ${userInfo.insurance}`, margin, yPosition), yPosition += 6;
-        if (userInfo.policy) pdf.text(`Policy: ${userInfo.policy}`, margin, yPosition), yPosition += 6;
-        yPosition += 8;
-        
-        // Check if we need a new page
-        if (yPosition > pageHeight - 80) {
-          pdf.addPage();
-          yPosition = 20;
-        }
-        
-        // Vehicles section
-        pdf.setFontSize(14);
-        pdf.text('Vehicles Involved', margin, yPosition);
-        yPosition += 10;
-        pdf.setFontSize(10);
-        
-        const vehicles = collectedInfo?.vehicles?.filter((v: any) => v.make || v.model) || [];
-        if (vehicles.length === 0) {
-          pdf.text('No vehicle information recorded', margin, yPosition);
-          yPosition += 8;
-        } else {
-          vehicles.forEach((vehicle: any, index: number) => {
-            const vehicleInfo = `${vehicle.make || ''} ${vehicle.model || ''} ${vehicle.color || ''}`.trim();
-            pdf.text(`Vehicle ${index + 1}: ${vehicleInfo}`, margin, yPosition);
+          pdf.text(`Location: ${collectedInfo?.accidentDetails?.location || 'Not specified'}`, margin, yPosition);
+          yPosition += 6;
+          
+          if (collectedInfo?.accidentDetails?.description) {
+            yPosition += 3;
+            pdf.text('Description:', margin, yPosition);
             yPosition += 6;
-            if (vehicle.plate) {
-              pdf.text(`License Plate: ${vehicle.plate}`, margin + 5, yPosition);
-              yPosition += 6;
-            }
-            if (vehicle.associatedDriver) {
-              pdf.text(`Associated Driver: ${vehicle.associatedDriver}`, margin + 5, yPosition);
-              yPosition += 6;
-            }
-            yPosition += 4;
-          });
-        }
-        
-        // Other drivers section
-        yPosition += 5;
-        pdf.setFontSize(14);
-        pdf.text('Other Drivers Involved', margin, yPosition);
-        yPosition += 10;
-        pdf.setFontSize(10);
-        
-        const otherDrivers = collectedInfo?.otherDrivers?.filter((d: any) => d.name) || [];
-        if (collectedInfo?.noOtherDrivers) {
-          pdf.text('Single car accident - no other drivers involved', margin, yPosition);
-          yPosition += 8;
-        } else if (otherDrivers.length === 0) {
-          pdf.text('No other driver information recorded', margin, yPosition);
-          yPosition += 8;
-        } else {
-          otherDrivers.forEach((driver: any, index: number) => {
-            pdf.text(`Driver ${index + 1}: ${driver.name}`, margin, yPosition);
-            yPosition += 6;
-            if (driver.phone) {
-              pdf.text(`Phone: ${driver.phone}`, margin + 5, yPosition);
-              yPosition += 6;
-            }
-            if (driver.license) {
-              pdf.text(`License: ${driver.license}`, margin + 5, yPosition);
-              yPosition += 6;
-            }
-            if (driver.insurance) {
-              pdf.text(`Insurance: ${driver.insurance}`, margin + 5, yPosition);
-              yPosition += 6;
-            }
-            if (driver.policy) {
-              pdf.text(`Policy: ${driver.policy}`, margin + 5, yPosition);
-              yPosition += 6;
-            }
-            yPosition += 4;
-          });
-        }
-        
-        // Check if we need a new page
-        if (yPosition > pageHeight - 80) {
-          pdf.addPage();
-          yPosition = 20;
-        }
-        
-        // Witnesses section
-        yPosition += 5;
-        pdf.setFontSize(14);
-        pdf.text('Witnesses', margin, yPosition);
-        yPosition += 10;
-        pdf.setFontSize(10);
-        
-        const witnesses = collectedInfo?.witnesses?.filter((w: any) => w.name) || [];
-        if (collectedInfo?.noWitnesses) {
-          pdf.text('No witnesses present', margin, yPosition);
-          yPosition += 8;
-        } else if (witnesses.length === 0) {
-          pdf.text('No witness information recorded', margin, yPosition);
-          yPosition += 8;
-        } else {
-          witnesses.forEach((witness: any, index: number) => {
-            pdf.text(`Witness ${index + 1}: ${witness.name}`, margin, yPosition);
-            yPosition += 6;
-            if (witness.contact) {
-              pdf.text(`Contact: ${witness.contact}`, margin + 5, yPosition);
-              yPosition += 6;
-            }
-            if (witness.description) {
-              pdf.text(`Description: ${witness.description}`, margin + 5, yPosition);
-              yPosition += 6;
-            }
-            yPosition += 4;
-          });
-        }
-        
-        // Photos section
-        const photos = collectedInfo?.photos?.filter((p: any) => p.dataUrl) || [];
-        if (photos.length > 0) {
+            const descriptionLines = pdf.splitTextToSize(collectedInfo.accidentDetails.description, pageWidth - 40);
+            pdf.text(descriptionLines, margin + 5, yPosition);
+            yPosition += descriptionLines.length * 6;
+          }
           yPosition += 10;
           
-          // Check if we need a new page for photos
-          if (yPosition > pageHeight - 100) {
+          // Your information section
+          pdf.setFontSize(14);
+          pdf.text('Your Information', margin, yPosition);
+          yPosition += 10;
+          pdf.setFontSize(10);
+          
+          const userInfo = collectedInfo?.userInfo || {};
+          if (userInfo.name) pdf.text(`Name: ${userInfo.name}`, margin, yPosition), yPosition += 6;
+          if (userInfo.phone) pdf.text(`Phone: ${userInfo.phone}`, margin, yPosition), yPosition += 6;
+          if (userInfo.license) pdf.text(`License: ${userInfo.license}`, margin, yPosition), yPosition += 6;
+          if (userInfo.insurance) pdf.text(`Insurance: ${userInfo.insurance}`, margin, yPosition), yPosition += 6;
+          if (userInfo.policy) pdf.text(`Policy: ${userInfo.policy}`, margin, yPosition), yPosition += 6;
+          yPosition += 8;
+          
+          // Check if we need a new page
+          if (yPosition > pageHeight - 80) {
             pdf.addPage();
             yPosition = 20;
           }
           
+          // Vehicles section
           pdf.setFontSize(14);
-          pdf.text('Photos', margin, yPosition);
+          pdf.text('Vehicles Involved', margin, yPosition);
           yPosition += 10;
+          pdf.setFontSize(10);
           
-          // Process photos synchronously
-          photos.forEach((photo: any, i: number) => {
-            // Check if we need a new page
-            if (yPosition > pageHeight - 120) {
+          const vehicles = collectedInfo?.vehicles?.filter((v: any) => v.make || v.model) || [];
+          if (vehicles.length === 0) {
+            pdf.text('No vehicle information recorded', margin, yPosition);
+            yPosition += 8;
+          } else {
+            vehicles.forEach((vehicle: any, index: number) => {
+              const vehicleInfo = `${vehicle.make || ''} ${vehicle.model || ''} ${vehicle.color || ''}`.trim();
+              pdf.text(`Vehicle ${index + 1}: ${vehicleInfo}`, margin, yPosition);
+              yPosition += 6;
+              if (vehicle.plate) {
+                pdf.text(`License Plate: ${vehicle.plate}`, margin + 5, yPosition);
+                yPosition += 6;
+              }
+              if (vehicle.associatedDriver) {
+                pdf.text(`Associated Driver: ${vehicle.associatedDriver}`, margin + 5, yPosition);
+                yPosition += 6;
+              }
+              yPosition += 4;
+            });
+          }
+          
+          // Other drivers section
+          yPosition += 5;
+          pdf.setFontSize(14);
+          pdf.text('Other Drivers Involved', margin, yPosition);
+          yPosition += 10;
+          pdf.setFontSize(10);
+          
+          const otherDrivers = collectedInfo?.otherDrivers?.filter((d: any) => d.name) || [];
+          if (collectedInfo?.noOtherDrivers) {
+            pdf.text('Single car accident - no other drivers involved', margin, yPosition);
+            yPosition += 8;
+          } else if (otherDrivers.length === 0) {
+            pdf.text('No other driver information recorded', margin, yPosition);
+            yPosition += 8;
+          } else {
+            otherDrivers.forEach((driver: any, index: number) => {
+              pdf.text(`Driver ${index + 1}: ${driver.name}`, margin, yPosition);
+              yPosition += 6;
+              if (driver.phone) {
+                pdf.text(`Phone: ${driver.phone}`, margin + 5, yPosition);
+                yPosition += 6;
+              }
+              if (driver.license) {
+                pdf.text(`License: ${driver.license}`, margin + 5, yPosition);
+                yPosition += 6;
+              }
+              if (driver.insurance) {
+                pdf.text(`Insurance: ${driver.insurance}`, margin + 5, yPosition);
+                yPosition += 6;
+              }
+              if (driver.policy) {
+                pdf.text(`Policy: ${driver.policy}`, margin + 5, yPosition);
+                yPosition += 6;
+              }
+              yPosition += 4;
+            });
+          }
+          
+          // Check if we need a new page
+          if (yPosition > pageHeight - 80) {
+            pdf.addPage();
+            yPosition = 20;
+          }
+          
+          // Witnesses section
+          yPosition += 5;
+          pdf.setFontSize(14);
+          pdf.text('Witnesses', margin, yPosition);
+          yPosition += 10;
+          pdf.setFontSize(10);
+          
+          const witnesses = collectedInfo?.witnesses?.filter((w: any) => w.name) || [];
+          if (collectedInfo?.noWitnesses) {
+            pdf.text('No witnesses present', margin, yPosition);
+            yPosition += 8;
+          } else if (witnesses.length === 0) {
+            pdf.text('No witness information recorded', margin, yPosition);
+            yPosition += 8;
+          } else {
+            witnesses.forEach((witness: any, index: number) => {
+              pdf.text(`Witness ${index + 1}: ${witness.name}`, margin, yPosition);
+              yPosition += 6;
+              if (witness.contact) {
+                pdf.text(`Contact: ${witness.contact}`, margin + 5, yPosition);
+                yPosition += 6;
+              }
+              if (witness.description) {
+                pdf.text(`Description: ${witness.description}`, margin + 5, yPosition);
+                yPosition += 6;
+              }
+              yPosition += 4;
+            });
+          }
+          
+          // Photos section
+          const photos = collectedInfo?.photos?.filter((p: any) => p.dataUrl) || [];
+          if (photos.length > 0) {
+            yPosition += 10;
+            
+            // Check if we need a new page for photos
+            if (yPosition > pageHeight - 100) {
               pdf.addPage();
               yPosition = 20;
             }
             
-            // Add photo description
-            pdf.setFontSize(10);
-            const photoTitle = photo.description || `${photo.type.replace('-', ' ')} photo`;
-            pdf.text(`${i + 1}. ${photoTitle}`, margin, yPosition);
-            yPosition += 8;
+            pdf.setFontSize(14);
+            pdf.text('Photos', margin, yPosition);
+            yPosition += 10;
             
-            // Add photo if dataUrl exists
-            if (photo.dataUrl) {
-              try {
-                // Create a temporary image to get original dimensions
-                const tempImg = document.createElement('img');
-                tempImg.src = photo.dataUrl;
-                
-                // Calculate aspect ratio and dimensions
-                const maxWidth = pageWidth - 40; // Leave margins
-                const maxHeight = 100; // Maximum height constraint
-                
-                let photoWidth = maxWidth;
-                let photoHeight = maxHeight;
-                
-                // If we can get the natural dimensions, use them to maintain aspect ratio
-                if (tempImg.naturalWidth && tempImg.naturalHeight) {
-                  const aspectRatio = tempImg.naturalWidth / tempImg.naturalHeight;
+            // Process photos asynchronously to get proper dimensions
+            for (let i = 0; i < photos.length; i++) {
+              const photo = photos[i];
+              
+              // Check if we need a new page
+              if (yPosition > pageHeight - 120) {
+                pdf.addPage();
+                yPosition = 20;
+              }
+              
+              // Add photo description
+              pdf.setFontSize(10);
+              const photoTitle = photo.description || `${photo.type.replace('-', ' ')} photo`;
+              pdf.text(`${i + 1}. ${photoTitle}`, margin, yPosition);
+              yPosition += 8;
+              
+              // Add photo if dataUrl exists
+              if (photo.dataUrl) {
+                try {
+                  // Get proper image dimensions asynchronously
+                  const { width: photoWidth, height: photoHeight } = await new Promise<{width: number, height: number}>((resolve) => {
+                    const tempImg = new Image();
+                    tempImg.onload = () => {
+                      const maxWidth = pageWidth - 40; // Leave margins
+                      const maxHeight = 100; // Maximum height constraint
+                      
+                      let width = maxWidth;
+                      let height = maxHeight;
+                      
+                      if (tempImg.naturalWidth && tempImg.naturalHeight) {
+                        const aspectRatio = tempImg.naturalWidth / tempImg.naturalHeight;
+                        
+                        if (aspectRatio > 1) {
+                          // Landscape: fit to width
+                          height = width / aspectRatio;
+                          if (height > maxHeight) {
+                            height = maxHeight;
+                            width = height * aspectRatio;
+                          }
+                        } else {
+                          // Portrait: fit to height
+                          width = height * aspectRatio;
+                          if (width > maxWidth) {
+                            width = maxWidth;
+                            height = width / aspectRatio;
+                          }
+                        }
+                      }
+                      
+                      resolve({ width, height });
+                    };
+                    tempImg.onerror = () => {
+                      // Fallback to default dimensions if image fails to load
+                      resolve({ width: pageWidth - 40, height: 100 });
+                    };
+                    tempImg.src = photo.dataUrl;
+                  });
                   
-                  if (aspectRatio > 1) {
-                    // Landscape: fit to width
-                    photoHeight = photoWidth / aspectRatio;
-                    if (photoHeight > maxHeight) {
-                      photoHeight = maxHeight;
-                      photoWidth = photoHeight * aspectRatio;
-                    }
-                  } else {
-                    // Portrait: fit to height
-                    photoWidth = photoHeight * aspectRatio;
-                    if (photoWidth > maxWidth) {
-                      photoWidth = maxWidth;
-                      photoHeight = photoWidth / aspectRatio;
-                    }
+                  // Check if we need a new page for this photo
+                  if (yPosition + photoHeight > pageHeight - 30) {
+                    pdf.addPage();
+                    yPosition = 20;
+                    // Re-add photo title on new page
+                    pdf.setFontSize(10);
+                    pdf.text(`${i + 1}. ${photoTitle}`, margin, yPosition);
+                    yPosition += 8;
                   }
+                  
+                  pdf.addImage(photo.dataUrl, 'JPEG', margin, yPosition, photoWidth, photoHeight);
+                  yPosition += photoHeight + 10;
+                  
+                } catch (error) {
+                  console.error('Error adding photo to PDF:', error);
+                  pdf.text('Photo could not be included', margin + 5, yPosition);
+                  yPosition += 10;
                 }
-                
-                // Check if we need a new page for this photo
-                if (yPosition + photoHeight > pageHeight - 30) {
-                  pdf.addPage();
-                  yPosition = 20;
-                  // Re-add photo title on new page
-                  pdf.setFontSize(10);
-                  pdf.text(`${i + 1}. ${photoTitle}`, margin, yPosition);
-                  yPosition += 8;
-                }
-                
-                pdf.addImage(photo.dataUrl, 'JPEG', margin, yPosition, photoWidth, photoHeight);
-                yPosition += photoHeight + 10;
-                
-              } catch (error) {
-                console.error('Error adding photo to PDF:', error);
-                pdf.text('Photo could not be included', margin + 5, yPosition);
-                yPosition += 10;
               }
             }
-          });
+          }
+          
+          // Add footer disclaimer
+          const disclaimer = "Crash Genius is a service provided by Cannon Law, a law firm based in Fort Collins, Colorado. No attorney-client relationship is formed through the use of this service. If you would like to contact us to discuss whether we are able to represent you on a no-win, no-fee basis, please visit us at www.cannonlaw.com or call (970) 471-7170.";
+          
+          pdf.setFontSize(8);
+          const disclaimerLines = pdf.splitTextToSize(disclaimer, pageWidth - 20);
+          const disclaimerHeight = disclaimerLines.length * 3;
+          pdf.text(disclaimerLines, 10, pageHeight - disclaimerHeight - 10);
+          
+          // Return the PDF blob instead of saving
+          const blob = pdf.output('blob');
+          resolve(blob);
+        } catch (error) {
+          reject(error);
         }
-        
-        // Add footer disclaimer
-        const disclaimer = "Crash Genius is a service provided by Cannon Law, a law firm based in Fort Collins, Colorado. No attorney-client relationship is formed through the use of this service. If you would like to contact us to discuss whether we are able to represent you on a no-win, no-fee basis, please visit us at www.cannonlaw.com or call (970) 471-7170.";
-        
-        pdf.setFontSize(8);
-        const disclaimerLines = pdf.splitTextToSize(disclaimer, pageWidth - 20);
-        const disclaimerHeight = disclaimerLines.length * 3;
-        pdf.text(disclaimerLines, 10, pageHeight - disclaimerHeight - 10);
-        
-        // Return the PDF blob instead of saving
-        const blob = pdf.output('blob');
-        resolve(blob);
       };
       img.onerror = reject;
       img.src = headerImage;
