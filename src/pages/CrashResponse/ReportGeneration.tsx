@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { ProgressIndicator } from "@/components/CrashApp/ProgressIndicator";
 import { PrimaryActionButton } from "@/components/CrashApp/PrimaryActionButton";
 import { Button } from "@/components/ui/button";
@@ -14,6 +15,10 @@ import {
 import { jsPDF } from "jspdf";
 import headerImage from "@/assets/crash-genius-header.png";
 import { supabase } from "@/integrations/supabase/client";
+import { AuthModal } from "@/components/auth/AuthModal";
+import { useAuth } from "@/hooks/useAuth";
+import { useNavigate } from "react-router-dom";
+import { useToast } from "@/hooks/use-toast";
 
 interface ReportGenerationProps {
   collectedInfo: any;
@@ -25,6 +30,11 @@ const stepTitles = ["Safety Check", "Emergency Contacts", "Authorities", "Inform
 export const ReportGeneration = ({ collectedInfo, onComplete }: ReportGenerationProps) => {
   const currentDate = new Date().toLocaleDateString();
   const currentTime = new Date().toLocaleTimeString();
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [isReportGenerated, setIsReportGenerated] = useState(false);
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  const { toast } = useToast();
 
   const generatePDF = async (): Promise<Blob> => {
     return new Promise(async (resolve, reject) => {
@@ -321,10 +331,71 @@ export const ReportGeneration = ({ collectedInfo, onComplete }: ReportGeneration
       a.download = fileName;
       a.click();
       URL.revokeObjectURL(url);
+      
+      // Mark report as generated and show auth modal if user is not logged in
+      setIsReportGenerated(true);
+      if (!user) {
+        setShowAuthModal(true);
+      }
     } catch (error) {
       console.error('Error generating PDF:', error);
-      alert('Error generating PDF report. Please try again.');
+      toast({
+        title: "Error",
+        description: "Error generating PDF report. Please try again.",
+        variant: "destructive",
+      });
     }
+  };
+
+  const saveReportToAccount = async () => {
+    if (!user || !isReportGenerated) return;
+
+    try {
+      // Upload PDF and get URL
+      const pdfUrl = await uploadPDFAndGetLink();
+      
+      // Save report to database
+      const { error } = await supabase
+        .from('saved_reports')
+        .insert({
+          user_id: user.id,
+          title: `Crash Report - ${currentDate}`,
+          collected_info: collectedInfo,
+          pdf_url: pdfUrl,
+        });
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: "Your report has been saved to your account!",
+      });
+
+      return true;
+    } catch (error) {
+      console.error('Error saving report:', error);
+      toast({
+        title: "Error",
+        description: "Failed to save report to your account.",
+        variant: "destructive",
+      });
+      return false;
+    }
+  };
+
+  const handleAuthSuccess = async () => {
+    setShowAuthModal(false);
+    
+    // Wait a moment for the auth state to update
+    setTimeout(async () => {
+      const success = await saveReportToAccount();
+      if (success) {
+        toast({
+          title: "Welcome!",
+          description: "Your account has been created and your report has been saved.",
+        });
+      }
+    }, 1000);
   };
 
   const uploadPDFAndGetLink = async () => {
@@ -509,6 +580,15 @@ export const ReportGeneration = ({ collectedInfo, onComplete }: ReportGeneration
               </div>
             </Card>
 
+            {user && (
+              <Button 
+                onClick={() => navigate('/dashboard')}
+                className="w-full h-12"
+              >
+                View My Reports
+              </Button>
+            )}
+
             <Button 
               onClick={onComplete}
               variant="outline" 
@@ -532,6 +612,13 @@ export const ReportGeneration = ({ collectedInfo, onComplete }: ReportGeneration
           </Card>
         </div>
       </div>
+
+      {/* Authentication Modal */}
+      <AuthModal
+        isOpen={showAuthModal}
+        onClose={() => setShowAuthModal(false)}
+        onSuccess={handleAuthSuccess}
+      />
     </div>
   );
 };
