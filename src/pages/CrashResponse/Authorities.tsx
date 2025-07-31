@@ -87,11 +87,14 @@ export const Authorities = ({ onNext }: AuthoritiesProps) => {
             <Card className="p-6 bg-secondary">
               <div className="text-center mb-4">
                 <h3 className="font-semibold">No Injuries or Danger</h3>
-                <p className="text-sm text-muted-foreground">
+                <p className="text-sm text-muted-foreground mb-3">
                   Minor accident with no immediate police response needed
                 </p>
+                <p className="text-xs text-muted-foreground bg-background p-2 rounded border">
+                  ⚠️ Note: Some jurisdictions legally require police notification for any accident. Check your local laws.
+                </p>
               </div>
-              <PrimaryActionButton onClick={() => onNext('skip')}>
+              <PrimaryActionButton onClick={() => onNext("skip")}>
                 Continue Without Authorities
               </PrimaryActionButton>
             </Card>
