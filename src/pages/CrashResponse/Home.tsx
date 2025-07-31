@@ -4,6 +4,7 @@ import { EmergencyButton } from "@/components/CrashApp/EmergencyButton";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { AlertTriangle, FileText, Users, Settings, Phone } from "lucide-react";
+import logo from "@/assets/crash-genius-logo.png";
 
 interface HomeProps {
   onStartCrashReport: () => void;
@@ -26,9 +27,11 @@ export const Home = ({ onStartCrashReport }: HomeProps) => {
       <div className="max-w-md mx-auto">
         {/* Header */}
         <div className="text-center mb-8 pt-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-primary/10 rounded-full mb-4">
-            <AlertTriangle className="w-8 h-8 text-primary" />
-          </div>
+          <img 
+            src={logo} 
+            alt="Crash Genius Logo" 
+            className="w-24 h-24 mx-auto mb-6"
+          />
           <h1 className="text-2xl font-bold text-foreground mb-2">
             Cannon Law Crash Genius
           </h1>
