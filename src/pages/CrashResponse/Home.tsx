@@ -33,7 +33,9 @@ export const Home = ({ onStartCrashReport }: HomeProps) => {
             className="w-24 h-24 mx-auto mb-6"
           />
           <h1 className="text-2xl font-bold text-foreground mb-2">
-            Cannon Law Crash Genius
+            <div>Crash Genius</div>
+            <div>from</div>
+            <div>Cannon Law</div>
           </h1>
           <p className="text-muted-foreground">
             Start a Crash Report for a step by step guide to handling a motor vehicle collision.
