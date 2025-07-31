@@ -37,7 +37,7 @@ interface CollectedInfo {
   otherDrivers: any[];
   vehicles: any[];
   witnesses: any[];
-  photos: string[];
+  photos: { id: string; type: string; description: string }[];
   noOtherDrivers: boolean;
   noOtherVehicles: boolean;
   noWitnesses: boolean;
@@ -176,6 +176,34 @@ export const InformationGathering = ({ onNext }: InformationGatheringProps) => {
       ...prev,
       noWitnesses: !prev.noWitnesses,
       witnesses: !prev.noWitnesses ? [] : prev.witnesses
+    }));
+  };
+
+  const addPhoto = () => {
+    const newPhoto = {
+      id: Date.now().toString(),
+      type: 'additional',
+      description: ''
+    };
+    setCollectedInfo(prev => ({
+      ...prev,
+      photos: [...prev.photos, newPhoto]
+    }));
+  };
+
+  const removePhoto = (photoId: string) => {
+    setCollectedInfo(prev => ({
+      ...prev,
+      photos: prev.photos.filter(photo => photo.id !== photoId)
+    }));
+  };
+
+  const updatePhoto = (photoId: string, description: string) => {
+    setCollectedInfo(prev => ({
+      ...prev,
+      photos: prev.photos.map(photo => 
+        photo.id === photoId ? { ...photo, description } : photo
+      )
     }));
   };
 
@@ -469,6 +497,43 @@ export const InformationGathering = ({ onNext }: InformationGatheringProps) => {
               <span className="text-xs">Other Vehicle</span>
             </Button>
           </div>
+
+          {/* Additional Photos */}
+          {collectedInfo.photos.length > 0 && (
+            <div className="space-y-3">
+              <h4 className="font-medium text-sm">Additional Photos</h4>
+              {collectedInfo.photos.map((photo) => (
+                <div key={photo.id} className="flex items-center space-x-3 border border-border rounded-lg p-3">
+                  <Camera className="w-5 h-5 text-muted-foreground" />
+                  <Input
+                    placeholder="Photo description"
+                    value={photo.description}
+                    onChange={(e) => updatePhoto(photo.id, e.target.value)}
+                    className="flex-1"
+                  />
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => removePhoto(photo.id)}
+                    className="h-8 w-8 p-0 text-destructive hover:text-destructive"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Add Photo Button */}
+          <Button
+            variant="outline"
+            onClick={addPhoto}
+            className="w-full"
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            Add Additional Photo
+          </Button>
+
           <p className="text-sm text-muted-foreground">
             Take photos from multiple angles. Include close-ups of damage and wide shots of the scene.
           </p>
