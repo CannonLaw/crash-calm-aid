@@ -36,7 +36,7 @@ export const Home = ({ onStartCrashReport }: HomeProps) => {
             Cannon Law Crash Genius
           </h1>
           <p className="text-muted-foreground">
-            Stay calm. We'll guide you through this step by step.
+            Start a Crash Report for a step by step guide to handling a crash.
           </p>
         </div>
 
