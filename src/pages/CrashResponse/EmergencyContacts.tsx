@@ -59,11 +59,6 @@ export const EmergencyContacts = ({ onNext }: EmergencyContactsProps) => {
           <Card className="p-6 mb-6">
             <div className="text-center mb-6">
               <h3 className="text-lg font-semibold mb-2">Contact</h3>
-              <div className="bg-secondary rounded-lg p-4">
-                <p className="font-medium text-lg">{emergencyContact.name}</p>
-                <p className="text-muted-foreground">{emergencyContact.relationship}</p>
-                <p className="text-sm text-muted-foreground mt-1">{emergencyContact.phone}</p>
-              </div>
             </div>
 
             <div className="space-y-3">
