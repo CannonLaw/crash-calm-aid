@@ -57,9 +57,6 @@ export const EmergencyContacts = ({ onNext }: EmergencyContactsProps) => {
 
           {/* Emergency Contact Card */}
           <Card className="p-6 mb-6">
-            <div className="text-center mb-6">
-              <h3 className="text-lg font-semibold mb-2">Contact</h3>
-            </div>
 
             <div className="space-y-3">
               <Button
