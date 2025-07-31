@@ -11,6 +11,8 @@ import {
   Clock,
   MapPin
 } from "lucide-react";
+import { jsPDF } from "jspdf";
+import headerImage from "@/assets/crash-genius-header.png";
 
 interface ReportGenerationProps {
   collectedInfo: any;
@@ -23,13 +25,105 @@ export const ReportGeneration = ({ collectedInfo, onComplete }: ReportGeneration
   const currentDate = new Date().toLocaleDateString();
   const currentTime = new Date().toLocaleTimeString();
 
-  const handleGenerateReport = () => {
-    // In a real app, this would generate an actual PDF
-    console.log('Generating PDF report with:', collectedInfo);
-    // Simulate report generation
-    setTimeout(() => {
-      alert('Report generated successfully!');
-    }, 1000);
+  const handleGenerateReport = async () => {
+    try {
+      const pdf = new jsPDF();
+      const pageWidth = pdf.internal.pageSize.width;
+      const pageHeight = pdf.internal.pageSize.height;
+      
+      // Add header image to first page
+      const img = new Image();
+      img.onload = () => {
+        // Add header image (scaled to fit page width)
+        const imgWidth = pageWidth - 20; // 10mm margin on each side
+        const imgHeight = (img.height / img.width) * imgWidth;
+        pdf.addImage(headerImage, 'PNG', 10, 10, imgWidth, imgHeight);
+        
+        // Add report content
+        let yPosition = imgHeight + 30;
+        
+        pdf.setFontSize(20);
+        pdf.text('Car Accident Report', 10, yPosition);
+        yPosition += 15;
+        
+        pdf.setFontSize(12);
+        pdf.text(`Date: ${currentDate}`, 10, yPosition);
+        yPosition += 8;
+        pdf.text(`Time: ${currentTime}`, 10, yPosition);
+        yPosition += 8;
+        pdf.text(`Location: ${collectedInfo?.accidentDetails?.location || 'Not specified'}`, 10, yPosition);
+        yPosition += 15;
+        
+        // Add other drivers section
+        pdf.setFontSize(14);
+        pdf.text('Other Drivers Involved:', 10, yPosition);
+        yPosition += 10;
+        pdf.setFontSize(10);
+        
+        const otherDrivers = collectedInfo?.otherDrivers?.filter((d: any) => d.name) || [];
+        if (otherDrivers.length === 0) {
+          pdf.text('No other drivers involved', 10, yPosition);
+          yPosition += 8;
+        } else {
+          otherDrivers.forEach((driver: any, index: number) => {
+            pdf.text(`Driver ${index + 1}: ${driver.name}`, 10, yPosition);
+            yPosition += 6;
+            if (driver.phone) {
+              pdf.text(`Phone: ${driver.phone}`, 15, yPosition);
+              yPosition += 6;
+            }
+            if (driver.insurance) {
+              pdf.text(`Insurance: ${driver.insurance}`, 15, yPosition);
+              yPosition += 6;
+            }
+            yPosition += 4;
+          });
+        }
+        
+        // Add witnesses section
+        yPosition += 5;
+        pdf.setFontSize(14);
+        pdf.text('Witnesses:', 10, yPosition);
+        yPosition += 10;
+        pdf.setFontSize(10);
+        
+        const witnesses = collectedInfo?.witnesses?.filter((w: any) => w.name) || [];
+        if (witnesses.length === 0) {
+          pdf.text('No witnesses present', 10, yPosition);
+          yPosition += 8;
+        } else {
+          witnesses.forEach((witness: any, index: number) => {
+            pdf.text(`Witness ${index + 1}: ${witness.name}`, 10, yPosition);
+            yPosition += 6;
+            if (witness.phone) {
+              pdf.text(`Phone: ${witness.phone}`, 15, yPosition);
+              yPosition += 6;
+            }
+            if (witness.description) {
+              pdf.text(`Description: ${witness.description}`, 15, yPosition);
+              yPosition += 6;
+            }
+            yPosition += 4;
+          });
+        }
+        
+        // Add footer disclaimer
+        const disclaimer = "Crash Genius is a service provided by Cannon Law, a law firm based in Fort Collins, Colorado. No attorney-client relationship is formed through the use of this service. If you would like to contact us to discuss whether we are able to represent you on a no-win, no-fee basis, please visit us at www.cannonlaw.com or call (970) 471-7170.";
+        
+        pdf.setFontSize(8);
+        const disclaimerLines = pdf.splitTextToSize(disclaimer, pageWidth - 20);
+        const disclaimerHeight = disclaimerLines.length * 3;
+        pdf.text(disclaimerLines, 10, pageHeight - disclaimerHeight - 10);
+        
+        // Save the PDF
+        pdf.save(`accident-report-${currentDate.replace(/\//g, '-')}.pdf`);
+      };
+      img.src = headerImage;
+      
+    } catch (error) {
+      console.error('Error generating PDF:', error);
+      alert('Error generating PDF report. Please try again.');
+    }
   };
 
   const handleShareEmail = () => {
