@@ -13,7 +13,7 @@ import {
 } from "lucide-react";
 import { jsPDF } from "jspdf";
 import headerImage from "@/assets/crash-genius-header.png";
-import { supabase } from "@/lib/supabase";
+import { supabase } from "@/integrations/supabase/client";
 
 interface ReportGenerationProps {
   collectedInfo: any;
@@ -321,7 +321,7 @@ export const ReportGeneration = ({ collectedInfo, onComplete }: ReportGeneration
       
       // Upload to Supabase Storage
       const { data, error } = await supabase.storage
-        .from('reports')
+        .from('crash-reports')
         .upload(fileName, pdfBlob, {
           contentType: 'application/pdf'
         });
@@ -330,7 +330,7 @@ export const ReportGeneration = ({ collectedInfo, onComplete }: ReportGeneration
 
       // Get public URL
       const { data: urlData } = supabase.storage
-        .from('reports')
+        .from('crash-reports')
         .getPublicUrl(fileName);
 
       return urlData.publicUrl;
