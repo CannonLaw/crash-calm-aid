@@ -30,7 +30,7 @@ export const Home = ({ onStartCrashReport }: HomeProps) => {
             <AlertTriangle className="w-8 h-8 text-primary" />
           </div>
           <h1 className="text-2xl font-bold text-foreground mb-2">
-            Crash Calm Aid
+            Cannon Law Crash Genius
           </h1>
           <p className="text-muted-foreground">
             Stay calm. We'll guide you through this step by step.

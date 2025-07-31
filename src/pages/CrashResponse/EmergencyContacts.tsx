@@ -27,7 +27,7 @@ export const EmergencyContacts = ({ onNext }: EmergencyContactsProps) => {
   };
 
   const handleText = () => {
-    const message = encodeURIComponent("I've been in a car accident. I'm okay but wanted to let you know. I'm using Crash Calm Aid to handle the situation.");
+    const message = encodeURIComponent("I've been in a car accident. I'm okay but wanted to let you know. I'm using Cannon Law Crash Genius to handle the situation.");
     window.open(`sms:${emergencyContact.phone}?body=${message}`);
     setContactNotified(true);
   };
