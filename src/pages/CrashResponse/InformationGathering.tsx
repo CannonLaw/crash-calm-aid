@@ -210,7 +210,7 @@ export const InformationGathering = ({ onNext }: InformationGatheringProps) => {
                 className="w-full"
               >
                 <Plus className="w-4 h-4 mr-2" />
-                Add Another Driver
+                Add Driver
               </Button>
             </>
           )}
