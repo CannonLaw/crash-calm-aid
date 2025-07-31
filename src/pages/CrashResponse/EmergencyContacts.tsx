@@ -90,17 +90,6 @@ export const EmergencyContacts = ({ onNext }: EmergencyContactsProps) => {
             )}
           </Card>
 
-          {/* No Contact Option */}
-          <Card className="p-4 mb-6 bg-secondary">
-            <Button
-              variant="ghost"
-              className="w-full justify-between h-auto p-0"
-              onClick={() => {}}
-            >
-              <span className="text-sm">No emergency contact set up</span>
-              <ChevronRight className="w-4 h-4" />
-            </Button>
-          </Card>
 
           {/* Continue Button */}
           <div className="space-y-4">
