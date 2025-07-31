@@ -27,6 +27,13 @@ interface InformationGatheringProps {
 const stepTitles = ["Safety Check", "Emergency Contacts", "Authorities", "Information", "Report"];
 
 interface CollectedInfo {
+  userInfo: {
+    name: string;
+    phone: string;
+    license: string;
+    insurance: string;
+    policy: string;
+  };
   otherDrivers: any[];
   vehicles: any[];
   witnesses: any[];
@@ -45,6 +52,13 @@ export const InformationGathering = ({ onNext }: InformationGatheringProps) => {
   const [openSections, setOpenSections] = useState<Record<string, boolean>>({});
   const [completedSections, setCompletedSections] = useState<Record<string, boolean>>({});
   const [collectedInfo, setCollectedInfo] = useState<CollectedInfo>({
+    userInfo: {
+      name: '',
+      phone: '',
+      license: '',
+      insurance: '',
+      policy: ''
+    },
     otherDrivers: [],
     vehicles: [{ make: '', model: '', color: '', plate: '', associatedDriver: '' }],
     witnesses: [],
@@ -89,6 +103,13 @@ export const InformationGathering = ({ onNext }: InformationGatheringProps) => {
     setCollectedInfo(prev => ({
       ...prev,
       accidentDetails: { ...prev.accidentDetails, [field]: value }
+    }));
+  };
+
+  const updateUserInfo = (field: string, value: string) => {
+    setCollectedInfo(prev => ({
+      ...prev,
+      userInfo: { ...prev.userInfo, [field]: value }
     }));
   };
 
@@ -159,6 +180,41 @@ export const InformationGathering = ({ onNext }: InformationGatheringProps) => {
   };
 
   const sections = [
+    {
+      id: 'userInfo',
+      title: 'Your Information',
+      icon: User,
+      content: (
+        <div className="space-y-3">
+          <Input
+            placeholder="Full name"
+            value={collectedInfo.userInfo.name}
+            onChange={(e) => updateUserInfo('name', e.target.value)}
+          />
+          <Input
+            placeholder="Phone number"
+            type="tel"
+            value={collectedInfo.userInfo.phone}
+            onChange={(e) => updateUserInfo('phone', e.target.value)}
+          />
+          <Input
+            placeholder="License number"
+            value={collectedInfo.userInfo.license}
+            onChange={(e) => updateUserInfo('license', e.target.value)}
+          />
+          <Input
+            placeholder="Insurance company"
+            value={collectedInfo.userInfo.insurance}
+            onChange={(e) => updateUserInfo('insurance', e.target.value)}
+          />
+          <Input
+            placeholder="Policy number"
+            value={collectedInfo.userInfo.policy}
+            onChange={(e) => updateUserInfo('policy', e.target.value)}
+          />
+        </div>
+      )
+    },
     {
       id: 'drivers',
       title: 'Other Driver(s)',
