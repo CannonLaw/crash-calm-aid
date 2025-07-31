@@ -207,10 +207,8 @@ export const ReportGeneration = ({ collectedInfo, onComplete }: ReportGeneration
           pdf.text('Photos', margin, yPosition);
           yPosition += 10;
           
-          // Process photos
-          for (let i = 0; i < photos.length; i++) {
-            const photo = photos[i];
-            
+          // Process photos synchronously
+          photos.forEach((photo: any, i: number) => {
             // Check if we need a new page
             if (yPosition > pageHeight - 120) {
               pdf.addPage();
@@ -226,17 +224,58 @@ export const ReportGeneration = ({ collectedInfo, onComplete }: ReportGeneration
             // Add photo if dataUrl exists
             if (photo.dataUrl) {
               try {
-                const photoWidth = 80;
-                const photoHeight = 60;
+                // Create a temporary image to get original dimensions
+                const tempImg = document.createElement('img');
+                tempImg.src = photo.dataUrl;
+                
+                // Calculate aspect ratio and dimensions
+                const maxWidth = pageWidth - 40; // Leave margins
+                const maxHeight = 100; // Maximum height constraint
+                
+                let photoWidth = maxWidth;
+                let photoHeight = maxHeight;
+                
+                // If we can get the natural dimensions, use them to maintain aspect ratio
+                if (tempImg.naturalWidth && tempImg.naturalHeight) {
+                  const aspectRatio = tempImg.naturalWidth / tempImg.naturalHeight;
+                  
+                  if (aspectRatio > 1) {
+                    // Landscape: fit to width
+                    photoHeight = photoWidth / aspectRatio;
+                    if (photoHeight > maxHeight) {
+                      photoHeight = maxHeight;
+                      photoWidth = photoHeight * aspectRatio;
+                    }
+                  } else {
+                    // Portrait: fit to height
+                    photoWidth = photoHeight * aspectRatio;
+                    if (photoWidth > maxWidth) {
+                      photoWidth = maxWidth;
+                      photoHeight = photoWidth / aspectRatio;
+                    }
+                  }
+                }
+                
+                // Check if we need a new page for this photo
+                if (yPosition + photoHeight > pageHeight - 30) {
+                  pdf.addPage();
+                  yPosition = 20;
+                  // Re-add photo title on new page
+                  pdf.setFontSize(10);
+                  pdf.text(`${i + 1}. ${photoTitle}`, margin, yPosition);
+                  yPosition += 8;
+                }
+                
                 pdf.addImage(photo.dataUrl, 'JPEG', margin, yPosition, photoWidth, photoHeight);
                 yPosition += photoHeight + 10;
+                
               } catch (error) {
                 console.error('Error adding photo to PDF:', error);
                 pdf.text('Photo could not be included', margin + 5, yPosition);
-                yPosition += 6;
+                yPosition += 10;
               }
             }
-          }
+          });
         }
         
         // Add footer disclaimer
