@@ -119,7 +119,7 @@ export const AuthModal = ({ isOpen, onClose, onSuccess }: AuthModalProps) => {
                   />
                 </div>
                 <Button type="submit" className="w-full">
-                  Create Account & Save Report
+                  Create Account
                 </Button>
               </form>
             </TabsContent>
