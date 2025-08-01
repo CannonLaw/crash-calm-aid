@@ -10,7 +10,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useIsAdmin } from '@/hooks/useIsAdmin';
 import { toast } from 'sonner';
-import { format } from 'date-fns';
+import { formatDateOnly, formatTimeOnly } from '@/lib/dateUtils';
 
 interface SavedReport {
   id: string;
@@ -308,10 +308,10 @@ const AdminDashboard = () => {
                         <TableCell>
                           <div>
                             <div className="font-medium">
-                              {format(new Date(report.created_at), 'MMM dd, yyyy')}
+                              {formatDateOnly(report.created_at)}
                             </div>
                             <div className="text-sm text-muted-foreground">
-                              {format(new Date(report.created_at), 'h:mm a')}
+                              {formatTimeOnly(report.created_at)}
                             </div>
                           </div>
                         </TableCell>

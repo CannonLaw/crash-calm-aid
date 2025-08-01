@@ -9,7 +9,7 @@ import { Separator } from '@/components/ui/separator';
 import { Header } from '@/components/Header';
 import { Download, Share2, Calendar, FileText, LogOut, ArrowLeft } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { format } from 'date-fns';
+import { formatToLocalTime, formatDateOnly } from '@/lib/dateUtils';
 
 interface SavedReport {
   id: string;
@@ -166,7 +166,7 @@ const Dashboard = () => {
                       <CardTitle className="text-lg">{report.title}</CardTitle>
                       <CardDescription className="flex items-center gap-2 mt-1">
                         <Calendar className="w-4 h-4" />
-                        {format(new Date(report.created_at), 'MMM dd, yyyy at h:mm a')}
+                        {formatToLocalTime(report.created_at)}
                       </CardDescription>
                     </div>
                     <Badge variant="secondary">
@@ -180,9 +180,9 @@ const Dashboard = () => {
                       <div>
                         <h4 className="font-medium mb-2">Report Summary</h4>
                         <div className="text-sm text-muted-foreground space-y-1">
-                          {report.collected_info.accidentDetails?.date && (
-                            <p><strong>Date:</strong> {report.collected_info.accidentDetails.date}</p>
-                          )}
+                           {report.collected_info.accidentDetails?.dateTime && (
+                             <p><strong>Date:</strong> {formatDateOnly(report.collected_info.accidentDetails.dateTime)}</p>
+                           )}
                           {report.collected_info.accidentDetails?.location && (
                             <p><strong>Location:</strong> {report.collected_info.accidentDetails.location}</p>
                           )}
