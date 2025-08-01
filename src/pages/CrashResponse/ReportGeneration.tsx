@@ -620,7 +620,7 @@ export const ReportGeneration = ({ collectedInfo, onComplete, onGoBack }: Report
                 <h3 className="text-lg font-semibold text-center">Choose how to proceed with your report:</h3>
                 
                 <div className="grid gap-4 md:grid-cols-3">
-                  <Card className="cursor-pointer bg-primary/10 border-primary/20 hover:bg-primary/20 transition-colors" onClick={handleCreateAccountAndSave}>
+                  <Card className="cursor-pointer border-2 border-primary/30 bg-primary/5 hover:bg-primary/10 hover:border-primary/50 transition-all duration-200" onClick={handleCreateAccountAndSave}>
                     <CardHeader>
                       <CardTitle className="flex items-center text-primary text-base">
                         <UserPlus className="w-5 h-5 mr-2" />
@@ -640,9 +640,9 @@ export const ReportGeneration = ({ collectedInfo, onComplete, onGoBack }: Report
                     </CardContent>
                   </Card>
 
-                  <Card className="cursor-pointer bg-primary/10 border-primary/20 hover:bg-primary/20 transition-colors" onClick={handleSignInAndSave}>
+                  <Card className="cursor-pointer border-2 border-blue-300 bg-blue-50 hover:bg-blue-100 hover:border-blue-400 transition-all duration-200" onClick={handleSignInAndSave}>
                     <CardHeader>
-                      <CardTitle className="flex items-center text-primary text-base">
+                      <CardTitle className="flex items-center text-blue-600 text-base">
                         <LogIn className="w-5 h-5 mr-2" />
                         Sign In & Save
                       </CardTitle>
@@ -660,10 +660,10 @@ export const ReportGeneration = ({ collectedInfo, onComplete, onGoBack }: Report
                     </CardContent>
                   </Card>
 
-                  <Card className="cursor-pointer hover:bg-accent/50 transition-colors" onClick={handleDownloadOnly}>
+                  <Card className="cursor-pointer border-2 border-gray-300 bg-gray-50 hover:bg-gray-100 hover:border-gray-400 transition-all duration-200" onClick={handleDownloadOnly}>
                     <CardHeader>
-                      <CardTitle className="flex items-center text-base">
-                        <Download className="w-5 h-5 mr-2 text-secondary" />
+                      <CardTitle className="flex items-center text-gray-700 text-base">
+                        <Download className="w-5 h-5 mr-2" />
                         Download Only
                       </CardTitle>
                       <CardDescription className="text-sm">
