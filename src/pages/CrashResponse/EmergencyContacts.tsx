@@ -7,11 +7,12 @@ import { Users, Phone, MessageSquare, ChevronRight } from "lucide-react";
 
 interface EmergencyContactsProps {
   onNext: () => void;
+  onGoBack: () => void;
 }
 
 const stepTitles = ["Safety Check", "Emergency Contacts", "Authorities", "Information", "Report"];
 
-export const EmergencyContacts = ({ onNext }: EmergencyContactsProps) => {
+export const EmergencyContacts = ({ onNext, onGoBack }: EmergencyContactsProps) => {
   const [contactNotified, setContactNotified] = useState(false);
 
   // Mock emergency contact - in real app this would come from user settings
@@ -111,6 +112,18 @@ export const EmergencyContacts = ({ onNext }: EmergencyContactsProps) => {
               </p>
             </div>
           </Card>
+
+          {/* Go Back Button */}
+          <div className="text-center mt-4">
+            <Button 
+              variant="outline" 
+              onClick={onGoBack}
+              className="flex items-center gap-2"
+            >
+              <span>←</span>
+              Go Back to Safety Check
+            </Button>
+          </div>
         </div>
       </div>
     </div>

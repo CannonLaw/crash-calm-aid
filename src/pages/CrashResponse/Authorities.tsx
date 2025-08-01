@@ -7,11 +7,12 @@ import { Badge, ShieldCheck, Phone, MapPin } from "lucide-react";
 
 interface AuthoritiesProps {
   onNext: (authoritiesChoice: 'emergency' | 'non-emergency' | 'skip') => void;
+  onGoBack: () => void;
 }
 
 const stepTitles = ["Safety Check", "Emergency Contacts", "Authorities", "Information", "Report"];
 
-export const Authorities = ({ onNext }: AuthoritiesProps) => {
+export const Authorities = ({ onNext, onGoBack }: AuthoritiesProps) => {
   const handleEmergencyServices = () => {
     window.open('tel:911');
     onNext('emergency');
@@ -87,6 +88,18 @@ export const Authorities = ({ onNext }: AuthoritiesProps) => {
                 ⚠️ Note: Some jurisdictions legally require police notification for any accident. Check your local laws.
               </p>
             </Card>
+          </div>
+
+          {/* Go Back Button */}
+          <div className="text-center">
+            <Button 
+              variant="outline" 
+              onClick={onGoBack}
+              className="flex items-center gap-2"
+            >
+              <span>←</span>
+              Go Back to Emergency Contacts
+            </Button>
           </div>
 
         </div>

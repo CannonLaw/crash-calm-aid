@@ -7,11 +7,12 @@ import { Shield, AlertTriangle, MoveRight } from "lucide-react";
 
 interface SafetyCheckProps {
   onNext: (safetyStatus: 'safe' | 'moving' | 'emergency') => void;
+  onGoBack: () => void;
 }
 
 const stepTitles = ["Safety Check", "Emergency Contacts", "Authorities", "Information", "Report"];
 
-export const SafetyCheck = ({ onNext }: SafetyCheckProps) => {
+export const SafetyCheck = ({ onNext, onGoBack }: SafetyCheckProps) => {
   const handleEmergencyHelp = () => {
     // In a real app, this would make an actual emergency call
     window.open('tel:911');
@@ -84,6 +85,18 @@ export const SafetyCheck = ({ onNext }: SafetyCheckProps) => {
               </div>
             </div>
           </Card>
+
+          {/* Go Back Button */}
+          <div className="text-center">
+            <Button 
+              variant="outline" 
+              onClick={onGoBack}
+              className="flex items-center gap-2"
+            >
+              <span>←</span>
+              Go Back to Home
+            </Button>
+          </div>
         </div>
       </div>
     </div>

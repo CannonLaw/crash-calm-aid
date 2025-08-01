@@ -26,6 +26,7 @@ import { PhotoData } from '@/components/CrashApp/PhotoCapture/PhotoUtils';
 
 interface InformationGatheringProps {
   onNext: (collectedInfo: any) => void;
+  onGoBack: () => void;
 }
 
 const stepTitles = ["Safety Check", "Emergency Contacts", "Authorities", "Information", "Report"];
@@ -52,7 +53,7 @@ interface CollectedInfo {
   };
 }
 
-export const InformationGathering: React.FC<InformationGatheringProps> = ({ onNext }) => {
+export const InformationGathering: React.FC<InformationGatheringProps> = ({ onNext, onGoBack }) => {
   const [openSections, setOpenSections] = useState<Record<string, boolean>>({});
   const [completedSections, setCompletedSections] = useState<Record<string, boolean>>({});
   const [selectedPhoto, setSelectedPhoto] = useState<PhotoData | null>(null);
@@ -681,6 +682,18 @@ export const InformationGathering: React.FC<InformationGatheringProps> = ({ onNe
           <PrimaryActionButton onClick={() => onNext(collectedInfo)}>
             Finish Report
           </PrimaryActionButton>
+
+          {/* Go Back Button */}
+          <div className="text-center mt-4">
+            <Button 
+              variant="outline" 
+              onClick={onGoBack}
+              className="flex items-center gap-2"
+            >
+              <span>←</span>
+              Go Back to Authorities
+            </Button>
+          </div>
 
           <PhotoModal
             photo={selectedPhoto}

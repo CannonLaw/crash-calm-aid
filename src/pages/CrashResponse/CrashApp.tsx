@@ -52,6 +52,26 @@ export const CrashApp = () => {
     setCurrentState('information');
   };
 
+  const handleGoBackToHome = () => {
+    setCurrentState('home');
+  };
+
+  const handleGoBackToSafetyCheck = () => {
+    setCurrentState('safety-check');
+  };
+
+  const handleGoBackToEmergencyContacts = () => {
+    setCurrentState('emergency-contacts');
+  };
+
+  const handleGoBackToAuthorities = () => {
+    setCurrentState('authorities');
+  };
+
+  const handleEmergencyContacts = () => {
+    setCurrentState('authorities');
+  };
+
   const handleLogoClick = () => {
     setCurrentState('home');
     // Reset user responses when returning to home
@@ -63,22 +83,18 @@ export const CrashApp = () => {
     });
   };
 
-  const handleEmergencyContacts = () => {
-    setCurrentState('authorities');
-  };
-
   const renderCurrentScreen = () => {
     switch (currentState) {
       case 'home':
         return <Home onStartCrashReport={handleStartCrashReport} />;
       case 'safety-check':
-        return <SafetyCheck onNext={handleSafetyCheck} />;
+        return <SafetyCheck onNext={handleSafetyCheck} onGoBack={handleGoBackToHome} />;
       case 'emergency-contacts':
-        return <EmergencyContacts onNext={handleEmergencyContacts} />;
+        return <EmergencyContacts onNext={handleEmergencyContacts} onGoBack={handleGoBackToSafetyCheck} />;
       case 'authorities':
-        return <Authorities onNext={handleAuthorities} />;
+        return <Authorities onNext={handleAuthorities} onGoBack={handleGoBackToEmergencyContacts} />;
       case 'information':
-        return <InformationGathering onNext={handleInformationGathering} />;
+        return <InformationGathering onNext={handleInformationGathering} onGoBack={handleGoBackToAuthorities} />;
       case 'report':
         return <ReportGeneration collectedInfo={userResponses.collectedInfo} onComplete={handleReportComplete} onGoBack={handleGoBackToInformation} />;
       default:
