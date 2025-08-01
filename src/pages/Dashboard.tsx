@@ -111,6 +111,9 @@ const Dashboard = () => {
             <Button onClick={() => navigate('/')} className="bg-primary hover:bg-primary/90">
               Start a New Report
             </Button>
+            <Button variant="outline" onClick={() => navigate('/admin')}>
+              Admin Settings
+            </Button>
             <Button variant="outline" onClick={() => navigate('/')}>
               <ArrowLeft className="w-4 h-4 mr-2" />
               Back to App
