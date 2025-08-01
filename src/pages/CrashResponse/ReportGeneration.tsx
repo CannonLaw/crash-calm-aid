@@ -33,6 +33,7 @@ export const ReportGeneration = ({ collectedInfo, onComplete }: ReportGeneration
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [generatedPDFBlob, setGeneratedPDFBlob] = useState<Blob | null>(null);
   const [pendingSave, setPendingSave] = useState(false);
+  const [saving, setSaving] = useState(false);
   const { user } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -363,17 +364,33 @@ export const ReportGeneration = ({ collectedInfo, onComplete }: ReportGeneration
   };
 
   const saveReportToAccount = async () => {
-    if (!user || !generatedPDFBlob) return false;
+    if (!generatedPDFBlob) return false;
 
     try {
+      // Get current session to ensure we have a valid user
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      
+      if (sessionError || !session?.user) {
+        console.error('No valid session found:', sessionError);
+        toast({
+          title: "Authentication Required",
+          description: "Please log in to save your report.",
+          variant: "destructive",
+        });
+        setShowAuthModal(true);
+        return false;
+      }
+
+      setSaving(true);
+      
       // Upload PDF and get URL
       const pdfUrl = await uploadPDFAndGetLink();
       
-      // Save report to database
+      // Save report to database using the session user ID
       const { error } = await supabase
         .from('saved_reports')
         .insert({
-          user_id: user.id,
+          user_id: session.user.id,
           title: `Crash Report - ${currentDate}`,
           collected_info: collectedInfo,
           pdf_url: pdfUrl,
@@ -395,6 +412,8 @@ export const ReportGeneration = ({ collectedInfo, onComplete }: ReportGeneration
         variant: "destructive",
       });
       return false;
+    } finally {
+      setSaving(false);
     }
   };
 
