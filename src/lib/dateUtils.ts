@@ -6,21 +6,7 @@ import { formatInTimeZone, toZonedTime } from 'date-fns-tz';
  */
 export const formatToLocalTime = (date: string | Date): string => {
   const userTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-  const inputDate = new Date(date);
-  
-  // Debug logging
-  console.log('formatToLocalTime debug:', {
-    input: date,
-    inputDate: inputDate.toISOString(),
-    userTimeZone,
-    inputType: typeof date
-  });
-  
-  // Ensure we're working with a UTC date from the database
-  const result = formatInTimeZone(inputDate, userTimeZone, 'MMM dd, yyyy \'at\' h:mm a');
-  console.log('formatToLocalTime result:', result);
-  
-  return result;
+  return formatInTimeZone(new Date(date), userTimeZone, 'MMM dd, yyyy \'at\' h:mm a');
 };
 
 /**
