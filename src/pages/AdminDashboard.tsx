@@ -288,6 +288,7 @@ const AdminDashboard = () => {
                   <TableRow>
                     <TableHead>Report Date</TableHead>
                     <TableHead>User Name</TableHead>
+                    <TableHead>User Email</TableHead>
                     <TableHead>Contact Info</TableHead>
                     <TableHead>Location</TableHead>
                     <TableHead>Status</TableHead>
@@ -297,7 +298,7 @@ const AdminDashboard = () => {
                 <TableBody>
                   {filteredReports.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                      <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
                         {searchTerm ? 'No reports found matching your search.' : 'No reports found.'}
                       </TableCell>
                     </TableRow>
@@ -317,6 +318,9 @@ const AdminDashboard = () => {
                         <TableCell>
                           <div className="font-medium">{getUserName(report)}</div>
                           <div className="text-sm text-muted-foreground">{report.title}</div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="text-sm">{report.userEmail || 'No email'}</div>
                         </TableCell>
                         <TableCell>
                           <div className="text-sm">{getUserContact(report)}</div>
