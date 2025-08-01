@@ -49,6 +49,7 @@ export type Database = {
           created_at: string
           email: string
           id: string
+          is_admin: boolean
           updated_at: string
           user_id: string
         }
@@ -56,6 +57,7 @@ export type Database = {
           created_at?: string
           email: string
           id?: string
+          is_admin?: boolean
           updated_at?: string
           user_id: string
         }
@@ -63,6 +65,7 @@ export type Database = {
           created_at?: string
           email?: string
           id?: string
+          is_admin?: boolean
           updated_at?: string
           user_id?: string
         }
@@ -103,7 +106,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      is_user_admin: {
+        Args: { user_id_param?: string }
+        Returns: boolean
+      }
     }
     Enums: {
       [_ in never]: never
