@@ -620,7 +620,7 @@ export const ReportGeneration = ({ collectedInfo, onComplete, onGoBack }: Report
                 <h3 className="text-lg font-semibold text-center">Choose how to proceed with your report:</h3>
                 
                 <div className="grid gap-4 md:grid-cols-3">
-                  <Card className="cursor-pointer border-2 border-primary/30 bg-primary/5 hover:bg-primary/10 hover:border-primary/50 transition-all duration-200" onClick={handleCreateAccountAndSave}>
+                  <Card className="cursor-pointer border-2 border-primary/40 bg-primary/8 hover:bg-primary/15 hover:border-primary/60 transition-all duration-200" onClick={handleCreateAccountAndSave}>
                     <CardHeader>
                       <CardTitle className="flex items-center text-primary text-base">
                         <UserPlus className="w-5 h-5 mr-2" />
@@ -660,9 +660,9 @@ export const ReportGeneration = ({ collectedInfo, onComplete, onGoBack }: Report
                     </CardContent>
                   </Card>
 
-                  <Card className="cursor-pointer border-2 border-gray-300 bg-gray-50 hover:bg-gray-100 hover:border-gray-400 transition-all duration-200" onClick={handleDownloadOnly}>
+                  <Card className="cursor-pointer border-2 border-primary/40 bg-primary/8 hover:bg-primary/15 hover:border-primary/60 transition-all duration-200" onClick={handleDownloadOnly}>
                     <CardHeader>
-                      <CardTitle className="flex items-center text-gray-700 text-base">
+                      <CardTitle className="flex items-center text-primary text-base">
                         <Download className="w-5 h-5 mr-2" />
                         Download Only
                       </CardTitle>
