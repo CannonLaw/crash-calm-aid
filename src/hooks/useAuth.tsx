@@ -85,12 +85,39 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   const signOut = async () => {
+    // If there's no session, consider it already signed out
+    if (!session) {
+      setSession(null);
+      setUser(null);
+      return;
+    }
+
     const { error } = await supabase.auth.signOut();
+    
+    // Handle specific error cases
     if (error) {
+      // If session not found, clear local state anyway (user is effectively signed out)
+      if (error.message?.includes('Session not found') || error.message?.includes('session_not_found')) {
+        setSession(null);
+        setUser(null);
+        toast({
+          title: "Signed out",
+          description: "You have been signed out successfully.",
+        });
+        return;
+      }
+      
+      // For other errors, show the error message
       toast({
         title: "Error",
         description: error.message,
         variant: "destructive",
+      });
+    } else {
+      // Successful sign out
+      toast({
+        title: "Signed out",
+        description: "You have been signed out successfully.",
       });
     }
   };
