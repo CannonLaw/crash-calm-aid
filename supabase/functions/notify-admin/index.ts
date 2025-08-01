@@ -2,11 +2,14 @@ import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.53.0';
 
 interface NotificationRequest {
-  report_id: string;
-  title: string;
+  notification_type: 'new_report' | 'new_user';
+  report_id?: string;
+  title?: string;
   user_id: string;
   created_at: string;
-  collected_info: any;
+  collected_info?: any;
+  user_email?: string;
+  user_metadata?: any;
 }
 
 const corsHeaders = {
@@ -58,17 +61,27 @@ const handler = async (req: Request): Promise<Response> => {
       for (const admin of adminNotifications) {
         if (admin.notification_types.includes('email')) {
           try {
-            const emailResponse = await resend.emails.send({
-              from: 'Crash Genius Alerts <alerts@resend.dev>',
-              to: [admin.email],
-              subject: `New Crash Report: ${notificationData.title}`,
-              html: `
+            let subject: string;
+            let html: string;
+            
+            if (notificationData.notification_type === 'new_report') {
+              // Extract user name from collected info
+              const userName = notificationData.collected_info?.yourInfo?.name || 'Unknown User';
+              const userContact = notificationData.collected_info?.yourInfo?.phone || 
+                                notificationData.collected_info?.yourInfo?.email || 'No contact provided';
+              
+              subject = `New Crash Report: ${notificationData.title}`;
+              html = `
                 <h2>New Crash Report Submitted</h2>
                 <p><strong>Report Title:</strong> ${notificationData.title}</p>
                 <p><strong>Report ID:</strong> ${notificationData.report_id}</p>
                 <p><strong>Submitted:</strong> ${new Date(notificationData.created_at).toLocaleString()}</p>
                 
-                <h3>Report Summary</h3>
+                <h3>User Information</h3>
+                <p><strong>Name:</strong> ${userName}</p>
+                <p><strong>Contact:</strong> ${userContact}</p>
+                
+                <h3>Accident Details</h3>
                 <p><strong>Location:</strong> ${notificationData.collected_info?.location || 'Not specified'}</p>
                 <p><strong>Date/Time:</strong> ${notificationData.collected_info?.datetime || 'Not specified'}</p>
                 <p><strong>Injuries:</strong> ${notificationData.collected_info?.injuries || 'Not specified'}</p>
@@ -79,7 +92,45 @@ const handler = async (req: Request): Promise<Response> => {
                 
                 <hr>
                 <p style="color: #666; font-size: 12px;">This is an automated notification from Crash Genius.</p>
-              `,
+              `;
+            } else if (notificationData.notification_type === 'new_user') {
+              // New user notification
+              const userDisplayName = notificationData.user_metadata?.full_name || 
+                                    notificationData.user_metadata?.name || 
+                                    notificationData.user_email || 'New User';
+              
+              subject = `New User Registration: ${userDisplayName}`;
+              html = `
+                <h2>New User Account Created</h2>
+                <p><strong>User Email:</strong> ${notificationData.user_email}</p>
+                <p><strong>Registration Date:</strong> ${new Date(notificationData.created_at).toLocaleString()}</p>
+                
+                <h3>User Details</h3>
+                <p><strong>Name:</strong> ${userDisplayName}</p>
+                ${notificationData.user_metadata?.phone ? `<p><strong>Phone:</strong> ${notificationData.user_metadata.phone}</p>` : ''}
+                
+                <p>A new user has registered for Crash Genius. Please log into the admin dashboard to review the user details.</p>
+                
+                <hr>
+                <p style="color: #666; font-size: 12px;">This is an automated notification from Crash Genius.</p>
+              `;
+            } else {
+              // Fallback for unknown notification types
+              subject = 'Crash Genius Admin Notification';
+              html = `
+                <h2>Admin Notification</h2>
+                <p>A new notification was triggered but the type was not recognized.</p>
+                <p><strong>Notification Type:</strong> ${notificationData.notification_type}</p>
+                <p><strong>User ID:</strong> ${notificationData.user_id}</p>
+                <p><strong>Date:</strong> ${new Date(notificationData.created_at).toLocaleString()}</p>
+              `;
+            }
+
+            const emailResponse = await resend.emails.send({
+              from: 'Crash Genius Alerts <alerts@resend.dev>',
+              to: [admin.email],
+              subject,
+              html,
             });
 
             console.log(`Email sent to ${admin.email}:`, emailResponse);
@@ -98,7 +149,8 @@ const handler = async (req: Request): Promise<Response> => {
     return new Response(
       JSON.stringify({ 
         success: true, 
-        message: 'Admin notifications sent',
+        message: `Admin notifications sent for ${notificationData.notification_type}`,
+        notification_type: notificationData.notification_type,
         notified_admins: adminNotifications?.length || 0
       }),
       {
