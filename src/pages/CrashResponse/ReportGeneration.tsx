@@ -592,18 +592,18 @@ export const ReportGeneration = ({ collectedInfo, onComplete }: ReportGeneration
                 <h3 className="text-lg font-semibold text-center">Choose how to proceed with your report:</h3>
                 
                 <div className="grid gap-4 md:grid-cols-2">
-                  <Card className="cursor-pointer hover:bg-accent/50 transition-colors" onClick={handleCreateAccountAndSave}>
+                  <Card className="cursor-pointer bg-primary/10 border-primary/20 hover:bg-primary/20 transition-colors" onClick={handleCreateAccountAndSave}>
                     <CardHeader>
-                      <CardTitle className="flex items-center">
-                        <UserPlus className="w-5 h-5 mr-2 text-primary" />
+                      <CardTitle className="flex items-center text-primary">
+                        <UserPlus className="w-5 h-5 mr-2" />
                         Create Account & Save Report
                       </CardTitle>
-                      <CardDescription>
+                      <CardDescription className="text-primary/80">
                         Save your report to your account for future access and sharing
                       </CardDescription>
                     </CardHeader>
                     <CardContent>
-                      <ul className="text-sm space-y-1 text-muted-foreground">
+                      <ul className="text-sm space-y-1 text-primary/70">
                         <li>• Access from any device</li>
                         <li>• Share easily with links</li>
                         <li>• Keep organized records</li>
