@@ -23,6 +23,7 @@ import { PrimaryActionButton } from '@/components/CrashApp/PrimaryActionButton';
 import { PhotoGrid } from '@/components/CrashApp/PhotoCapture/PhotoGrid';
 import { PhotoModal } from '@/components/CrashApp/PhotoCapture/PhotoModal';
 import { PhotoData } from '@/components/CrashApp/PhotoCapture/PhotoUtils';
+import { getCurrentLocalDateTime } from '@/lib/dateUtils';
 
 interface InformationGatheringProps {
   onNext: (collectedInfo: any) => void;
@@ -76,7 +77,7 @@ export const InformationGathering: React.FC<InformationGatheringProps> = ({ onNe
     accidentDetails: {
       location: '',
       description: '',
-      dateTime: new Date().toISOString().slice(0, 16)
+      dateTime: getCurrentLocalDateTime()
     }
   });
 
