@@ -194,6 +194,7 @@ const AdminNotificationSettings = () => {
                       setNewNotificationTypes(newNotificationTypes.filter(type => type !== 'email'));
                     }
                   }}
+                  className="h-4 w-4"
                 />
                 <Label htmlFor="email-notifications">Email Notifications</Label>
               </div>
@@ -234,6 +235,7 @@ const AdminNotificationSettings = () => {
                       <Checkbox
                         checked={notification.is_active}
                         onCheckedChange={() => handleToggleActive(notification.id, notification.is_active)}
+                        className="h-4 w-4"
                       />
                       <div>
                         <p className="font-medium">{notification.email}</p>
