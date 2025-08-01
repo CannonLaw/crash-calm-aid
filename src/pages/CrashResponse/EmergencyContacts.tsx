@@ -22,13 +22,12 @@ export const EmergencyContacts = ({ onNext }: EmergencyContactsProps) => {
   };
 
   const handleCall = () => {
-    window.open(`tel:${emergencyContact.phone}`);
+    window.open('tel:');
     setContactNotified(true);
   };
 
   const handleText = () => {
-    const message = encodeURIComponent("I've been in a car accident. I'm okay but wanted to let you know. I'm using Cannon Law Crash Genius to handle the situation.");
-    window.open(`sms:${emergencyContact.phone}?body=${message}`);
+    window.open('sms:');
     setContactNotified(true);
   };
 
