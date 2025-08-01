@@ -108,6 +108,9 @@ const Dashboard = () => {
             </p>
           </div>
           <div className="flex gap-2">
+            <Button onClick={() => navigate('/')} className="bg-primary hover:bg-primary/90">
+              Start a New Report
+            </Button>
             <Button variant="outline" onClick={() => navigate('/')}>
               <ArrowLeft className="w-4 h-4 mr-2" />
               Back to App
