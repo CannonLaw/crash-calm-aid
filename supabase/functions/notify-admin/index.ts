@@ -77,7 +77,7 @@ const handler = async (req: Request): Promise<Response> => {
                 <h2>New Crash Report Submitted</h2>
                 <p><strong>Report Title:</strong> ${notificationData.title}</p>
                 <p><strong>Report ID:</strong> ${notificationData.report_id}</p>
-                <p><strong>Submitted:</strong> ${new Date(notificationData.created_at).toLocaleString()}</p>
+                <p><strong>Submitted:</strong> ${new Date(notificationData.created_at).toISOString().replace('T', ' at ').slice(0, -8)} UTC</p>
                 
                 <h3>User Information</h3>
                 <p><strong>Name:</strong> ${userName}</p>
