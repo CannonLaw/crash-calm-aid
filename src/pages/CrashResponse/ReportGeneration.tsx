@@ -65,11 +65,20 @@ export const ReportGeneration = ({ collectedInfo, onComplete, onGoBack }: Report
           const success = await saveReportToAccount(pdfBlob);
           if (success) {
             setReportSaved(true);
-            setStep('completed');
             setSaveAfterDownload(false); // Reset the flag
             
-            // Download for user convenience if this is the normal flow (not save after download)
-            if (!saveAfterDownload && step === 'generating') {
+            // If this was a save after download, redirect to dashboard
+            if (saveAfterDownload) {
+              toast({
+                title: "Report Saved!",
+                description: "Redirecting to your dashboard...",
+              });
+              setTimeout(() => {
+                navigate('/dashboard');
+              }, 1500);
+            } else {
+              // Normal flow - stay on current page and download
+              setStep('completed');
               const fileName = `accident-report-${currentDate.replace(/\//g, '-')}.pdf`;
               const url = URL.createObjectURL(pdfBlob);
               const a = document.createElement('a');
