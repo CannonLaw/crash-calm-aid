@@ -42,6 +42,7 @@ export const ReportGeneration = ({ collectedInfo, onComplete, onGoBack }: Report
   const [saving, setSaving] = useState(false);
   const [step, setStep] = useState<'choose' | 'generating' | 'completed'>('choose');
   const [reportSaved, setReportSaved] = useState(false);
+  const [saveAfterDownload, setSaveAfterDownload] = useState(false);
   const { user } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -49,36 +50,45 @@ export const ReportGeneration = ({ collectedInfo, onComplete, onGoBack }: Report
   // Handle authentication success and save report
   useEffect(() => {
     const handleAuthAndSave = async () => {
-      if (user && showAuthModal && !saving && step === 'generating') {
+      if (user && showAuthModal && !saving && (step === 'generating' || saveAfterDownload)) {
         setShowAuthModal(false);
         console.log('User authenticated, generating and saving report...');
         try {
-          const pdfBlob = await generatePDF();
-          setGeneratedPDFBlob(pdfBlob);
+          let pdfBlob = generatedPDFBlob;
+          
+          // If we don't have a PDF yet (normal flow) or if we're saving after download, generate it
+          if (!pdfBlob || saveAfterDownload) {
+            pdfBlob = await generatePDF();
+            setGeneratedPDFBlob(pdfBlob);
+          }
           
           const success = await saveReportToAccount(pdfBlob);
           if (success) {
             setReportSaved(true);
             setStep('completed');
+            setSaveAfterDownload(false); // Reset the flag
             
-            // Also download for user convenience
-            const fileName = `accident-report-${currentDate.replace(/\//g, '-')}.pdf`;
-            const url = URL.createObjectURL(pdfBlob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = fileName;
-            a.click();
-            URL.revokeObjectURL(url);
+            // Download for user convenience if this is the normal flow (not save after download)
+            if (!saveAfterDownload && step === 'generating') {
+              const fileName = `accident-report-${currentDate.replace(/\//g, '-')}.pdf`;
+              const url = URL.createObjectURL(pdfBlob);
+              const a = document.createElement('a');
+              a.href = url;
+              a.download = fileName;
+              a.click();
+              URL.revokeObjectURL(url);
+            }
           }
         } catch (error) {
           console.error('Error generating/saving report:', error);
           setStep('choose');
+          setSaveAfterDownload(false);
         }
       }
     };
 
     handleAuthAndSave();
-  }, [user, showAuthModal, saving, step]);
+  }, [user, showAuthModal, saving, step, saveAfterDownload]);
 
   const generatePDF = async (): Promise<Blob> => {
     return new Promise(async (resolve, reject) => {
@@ -764,7 +774,11 @@ export const ReportGeneration = ({ collectedInfo, onComplete, onGoBack }: Report
                           Want to save this report for later access?
                         </p>
                         <Button 
-                          onClick={() => setShowAuthModal(true)} 
+                          onClick={() => {
+                            setSaveAfterDownload(true);
+                            setAuthModalTab('signup');
+                            setShowAuthModal(true);
+                          }} 
                           variant="outline" 
                           className="w-full"
                         >
