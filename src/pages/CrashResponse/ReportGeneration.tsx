@@ -640,9 +640,9 @@ export const ReportGeneration = ({ collectedInfo, onComplete, onGoBack }: Report
                     </CardContent>
                   </Card>
 
-                  <Card className="cursor-pointer border-2 border-blue-300 bg-blue-50 hover:bg-blue-100 hover:border-blue-400 transition-all duration-200" onClick={handleSignInAndSave}>
+                  <Card className="cursor-pointer border-2 border-primary/40 bg-primary/8 hover:bg-primary/15 hover:border-primary/60 transition-all duration-200" onClick={handleSignInAndSave}>
                     <CardHeader>
-                      <CardTitle className="flex items-center text-blue-600 text-base">
+                      <CardTitle className="flex items-center text-primary text-base">
                         <LogIn className="w-5 h-5 mr-2" />
                         Sign In & Save
                       </CardTitle>
