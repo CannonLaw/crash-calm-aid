@@ -603,7 +603,7 @@ export const ReportGeneration = ({ collectedInfo, onComplete }: ReportGeneration
                       </CardDescription>
                     </CardHeader>
                     <CardContent>
-                      <ul className="text-sm space-y-1 text-primary/70">
+                      <ul className="text-sm space-y-1 text-muted-foreground">
                         <li>• Access from any device</li>
                         <li>• Share easily with links</li>
                         <li>• Keep organized records</li>
