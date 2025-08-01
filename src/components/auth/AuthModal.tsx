@@ -147,7 +147,7 @@ export const AuthModal = ({ isOpen, onClose, onSuccess }: AuthModalProps) => {
                   />
                 </div>
                 <Button type="submit" className="w-full">
-                  Sign In & Save Report
+                  Sign In
                 </Button>
               </form>
             </TabsContent>
