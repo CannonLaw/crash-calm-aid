@@ -9,7 +9,7 @@ import { Separator } from '@/components/ui/separator';
 import { Header } from '@/components/Header';
 import { Download, Share2, Calendar, FileText, LogOut, ArrowLeft } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { formatToLocalTime, formatDateOnly } from '@/lib/dateUtils';
+import { formatToLocalTime, formatDateOnly, formatLocalDateTimeForPDF } from '@/lib/dateUtils';
 
 interface SavedReport {
   id: string;
@@ -181,8 +181,8 @@ const Dashboard = () => {
                         <h4 className="font-medium mb-2">Report Summary</h4>
                         <div className="text-sm text-muted-foreground space-y-1">
                            {report.collected_info.accidentDetails?.dateTime && (
-                             <p><strong>Date:</strong> {formatDateOnly(report.collected_info.accidentDetails.dateTime)}</p>
-                           )}
+                              <p><strong>Date:</strong> {formatLocalDateTimeForPDF(report.collected_info.accidentDetails.dateTime).split(' at ')[0]}</p>
+                            )}
                           {report.collected_info.accidentDetails?.location && (
                             <p><strong>Location:</strong> {report.collected_info.accidentDetails.location}</p>
                           )}

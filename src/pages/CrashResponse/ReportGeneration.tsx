@@ -23,7 +23,7 @@ import { AuthModal } from "@/components/auth/AuthModal";
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
-import { formatForPDF } from "@/lib/dateUtils";
+import { formatForPDF, formatLocalDateTimeForPDF } from "@/lib/dateUtils";
 
 interface ReportGenerationProps {
   collectedInfo: any;
@@ -181,7 +181,7 @@ export const ReportGeneration = ({ collectedInfo, onComplete, onGoBack }: Report
           
           // Accident details section
           const accidentDateTime = collectedInfo?.accidentDetails?.dateTime 
-            ? formatForPDF(collectedInfo.accidentDetails.dateTime)
+            ? formatLocalDateTimeForPDF(collectedInfo.accidentDetails.dateTime)
             : formatForPDF(new Date());
           
           const accidentDetails = [
