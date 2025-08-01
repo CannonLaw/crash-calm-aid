@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAuth } from '@/hooks/useAuth';
 import { Archive, Users, ShieldCheck } from 'lucide-react';
@@ -19,11 +20,16 @@ export const AuthModal = ({ isOpen, onClose, onSuccess }: AuthModalProps) => {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [activeTab, setActiveTab] = useState('signup');
+  const [agreeToTerms, setAgreeToTerms] = useState(false);
   const { signUp, signIn } = useAuth();
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
     if (password !== confirmPassword) {
+      return;
+    }
+    
+    if (!agreeToTerms) {
       return;
     }
     
@@ -118,7 +124,25 @@ export const AuthModal = ({ isOpen, onClose, onSuccess }: AuthModalProps) => {
                     minLength={6}
                   />
                 </div>
-                <Button type="submit" className="w-full">
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="terms"
+                    checked={agreeToTerms}
+                    onCheckedChange={(checked) => setAgreeToTerms(checked as boolean)}
+                  />
+                  <Label htmlFor="terms" className="text-sm">
+                    I agree to the{' '}
+                    <a 
+                      href="https://www.cannonlaw.com/terms-of-service-and-privacy-policy/" 
+                      target="_blank" 
+                      rel="noopener noreferrer" 
+                      className="text-primary hover:underline"
+                    >
+                      Terms of Service and Privacy Policy
+                    </a>
+                  </Label>
+                </div>
+                <Button type="submit" className="w-full" disabled={!agreeToTerms}>
                   Create Account
                 </Button>
               </form>
