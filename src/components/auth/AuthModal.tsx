@@ -158,9 +158,9 @@ export const AuthModal = ({ isOpen, onClose, onSuccess, initialTab = 'signup' }:
                     id="terms"
                     checked={agreeToTerms}
                     onCheckedChange={(checked) => setAgreeToTerms(checked as boolean)}
-                    className="h-3 w-3 mt-0.5"
+                    className="h-4 w-4"
                   />
-                  <Label htmlFor="terms" className="text-sm leading-relaxed">
+                  <Label htmlFor="terms" className="text-sm">
                     I agree to the{' '}
                     <a 
                       href="https://www.cannonlaw.com/terms-of-service-and-privacy-policy/" 
