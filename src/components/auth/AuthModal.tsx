@@ -129,6 +129,7 @@ export const AuthModal = ({ isOpen, onClose, onSuccess }: AuthModalProps) => {
                     id="terms"
                     checked={agreeToTerms}
                     onCheckedChange={(checked) => setAgreeToTerms(checked as boolean)}
+                    className="h-4 w-4"
                   />
                   <Label htmlFor="terms" className="text-sm">
                     I agree to the{' '}
