@@ -2,7 +2,8 @@ import { useState, useEffect } from "react";
 import { ProgressIndicator } from "@/components/CrashApp/ProgressIndicator";
 import { PrimaryActionButton } from "@/components/CrashApp/PrimaryActionButton";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { 
   FileText, 
   Download, 
@@ -10,7 +11,9 @@ import {
   MessageSquare, 
   CheckCircle, 
   Clock,
-  MapPin
+  MapPin,
+  UserPlus,
+  AlertTriangle
 } from "lucide-react";
 import { jsPDF } from "jspdf";
 import headerImage from "@/assets/crash-genius-header.png";
@@ -31,29 +34,48 @@ export const ReportGeneration = ({ collectedInfo, onComplete }: ReportGeneration
   const currentDate = new Date().toLocaleDateString();
   const currentTime = new Date().toLocaleTimeString();
   const [showAuthModal, setShowAuthModal] = useState(false);
+  const [showDownloadConfirm, setShowDownloadConfirm] = useState(false);
   const [generatedPDFBlob, setGeneratedPDFBlob] = useState<Blob | null>(null);
-  const [pendingSave, setPendingSave] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [step, setStep] = useState<'choose' | 'generating' | 'completed'>('choose');
+  const [reportSaved, setReportSaved] = useState(false);
   const { user } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  // Auto-save report when user logs in and we have a generated PDF
+  // Handle authentication success and save report
   useEffect(() => {
-    const handleAutoSave = async () => {
-      if (user && generatedPDFBlob && pendingSave && !saving) {
-        console.log('Auto-saving report after authentication...');
-        const success = await saveReportToAccount();
-        if (success) {
-          setPendingSave(false);
-          // Clear the PDF blob after successful save to prevent duplicate saves
-          setGeneratedPDFBlob(null);
+    const handleAuthAndSave = async () => {
+      if (user && showAuthModal && !saving && step === 'generating') {
+        setShowAuthModal(false);
+        console.log('User authenticated, generating and saving report...');
+        try {
+          const pdfBlob = await generatePDF();
+          setGeneratedPDFBlob(pdfBlob);
+          
+          const success = await saveReportToAccount(pdfBlob);
+          if (success) {
+            setReportSaved(true);
+            setStep('completed');
+            
+            // Also download for user convenience
+            const fileName = `accident-report-${currentDate.replace(/\//g, '-')}.pdf`;
+            const url = URL.createObjectURL(pdfBlob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = fileName;
+            a.click();
+            URL.revokeObjectURL(url);
+          }
+        } catch (error) {
+          console.error('Error generating/saving report:', error);
+          setStep('choose');
         }
       }
     };
 
-    handleAutoSave();
-  }, [user, generatedPDFBlob, pendingSave, saving]);
+    handleAuthAndSave();
+  }, [user, showAuthModal, saving, step]);
 
   const generatePDF = async (): Promise<Blob> => {
     return new Promise(async (resolve, reject) => {
@@ -311,15 +333,57 @@ export const ReportGeneration = ({ collectedInfo, onComplete }: ReportGeneration
     });
   };
 
-  const handleGenerateReport = async () => {
+  const handleCreateAccountAndSave = () => {
+    setStep('generating');
+    if (user) {
+      // User already logged in, proceed directly
+      handleGenerateAndSave();
+    } else {
+      // Show auth modal
+      setShowAuthModal(true);
+    }
+  };
+
+  const handleGenerateAndSave = async () => {
     try {
       const pdfBlob = await generatePDF();
-      const fileName = `accident-report-${currentDate.replace(/\//g, '-')}.pdf`;
-      
-      // Store the PDF blob for potential saving
       setGeneratedPDFBlob(pdfBlob);
       
-      // Create download link
+      const success = await saveReportToAccount(pdfBlob);
+      if (success) {
+        setReportSaved(true);
+        setStep('completed');
+        
+        // Also download for user convenience
+        const fileName = `accident-report-${currentDate.replace(/\//g, '-')}.pdf`;
+        const url = URL.createObjectURL(pdfBlob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = fileName;
+        a.click();
+        URL.revokeObjectURL(url);
+      } else {
+        setStep('choose');
+      }
+    } catch (error) {
+      console.error('Error generating/saving report:', error);
+      setStep('choose');
+    }
+  };
+
+  const handleDownloadOnly = () => {
+    setShowDownloadConfirm(true);
+  };
+
+  const confirmDownloadOnly = async () => {
+    setShowDownloadConfirm(false);
+    setStep('generating');
+    
+    try {
+      const pdfBlob = await generatePDF();
+      setGeneratedPDFBlob(pdfBlob);
+      
+      const fileName = `accident-report-${currentDate.replace(/\//g, '-')}.pdf`;
       const url = URL.createObjectURL(pdfBlob);
       const a = document.createElement('a');
       a.href = url;
@@ -327,14 +391,7 @@ export const ReportGeneration = ({ collectedInfo, onComplete }: ReportGeneration
       a.click();
       URL.revokeObjectURL(url);
       
-      // If user is logged in, save immediately
-      if (user) {
-        await saveReportToAccount();
-      } else {
-        // Show auth modal for potential saving
-        setPendingSave(true);
-        setShowAuthModal(true);
-      }
+      setStep('completed');
     } catch (error) {
       console.error('Error generating PDF:', error);
       toast({
@@ -342,11 +399,13 @@ export const ReportGeneration = ({ collectedInfo, onComplete }: ReportGeneration
         description: "Error generating PDF report. Please try again.",
         variant: "destructive",
       });
+      setStep('choose');
     }
   };
 
-  const saveReportToAccount = async () => {
-    if (!generatedPDFBlob) return false;
+  const saveReportToAccount = async (pdfBlob?: Blob) => {
+    const blobToSave = pdfBlob || generatedPDFBlob;
+    if (!blobToSave) return false;
 
     try {
       // Get current session to ensure we have a valid user
@@ -366,7 +425,7 @@ export const ReportGeneration = ({ collectedInfo, onComplete }: ReportGeneration
       setSaving(true);
       
       // Upload PDF and get URL
-      const pdfUrl = await uploadPDFAndGetLink();
+      const pdfUrl = await uploadPDFAndGetLink(blobToSave);
       
       // Save report to database using the session user ID
       const { error } = await supabase
@@ -400,23 +459,22 @@ export const ReportGeneration = ({ collectedInfo, onComplete }: ReportGeneration
   };
 
   const handleAuthSuccess = async () => {
-    setShowAuthModal(false);
-    // The useEffect will handle saving automatically when user state updates
+    // The useEffect will handle the rest
     toast({
       title: "Welcome!",
-      description: "Your account has been created and your report will be saved.",
+      description: "Generating and saving your report...",
     });
   };
 
-  const uploadPDFAndGetLink = async () => {
+  const uploadPDFAndGetLink = async (pdfBlob?: Blob) => {
     try {
-      const pdfBlob = generatedPDFBlob || await generatePDF();
+      const blobToUpload = pdfBlob || generatedPDFBlob || await generatePDF();
       const fileName = `accident-reports/accident-report-${Date.now()}.pdf`;
       
       // Upload to Supabase Storage
       const { data, error } = await supabase.storage
         .from('crash-reports')
-        .upload(fileName, pdfBlob, {
+        .upload(fileName, blobToUpload, {
           contentType: 'application/pdf'
         });
 
@@ -466,178 +524,266 @@ export const ReportGeneration = ({ collectedInfo, onComplete }: ReportGeneration
       />
       
       <div className="p-4">
-        <div className="max-w-md mx-auto">
-          {/* Header */}
-          <div className="text-center mb-8 pt-6">
-            <div className="inline-flex items-center justify-center w-16 h-16 bg-primary/10 rounded-full mb-4">
-              <FileText className="w-8 h-8 text-primary" />
-            </div>
-            <h1 className="text-2xl font-bold text-foreground mb-2">
-              Generate Report
-            </h1>
-            <p className="text-muted-foreground">
-              Create your comprehensive accident report
-            </p>
-          </div>
+        <div className="max-w-2xl mx-auto space-y-6">
+          {step === 'choose' && (
+            <>
+              {/* Summary of collected information */}
+              <Card>
+                <div className="p-6">
+                  <h3 className="text-lg font-semibold mb-4 flex items-center">
+                    <FileText className="w-5 h-5 mr-2" />
+                    Report Summary
+                  </h3>
+                  
+                  <div className="space-y-4 text-sm">
+                    <div>
+                      <h4 className="font-medium">Accident Details</h4>
+                      <p className="text-muted-foreground">
+                        {collectedInfo?.accidentDetails?.location || 'Location not specified'} - {
+                          collectedInfo?.accidentDetails?.dateTime 
+                            ? new Date(collectedInfo.accidentDetails.dateTime).toLocaleString()
+                            : `${currentDate} ${currentTime}`
+                        }
+                      </p>
+                    </div>
+                    
+                    <div>
+                      <h4 className="font-medium">Your Information</h4>
+                      <p className="text-muted-foreground">
+                        {collectedInfo?.userInfo?.name || 'Name not provided'} - {collectedInfo?.userInfo?.phone || 'Phone not provided'}
+                      </p>
+                    </div>
+                    
+                    <div>
+                      <h4 className="font-medium">Vehicles</h4>
+                      <p className="text-muted-foreground">
+                        {collectedInfo?.vehicles?.filter((v: any) => v.make || v.model).length || 0} vehicle(s) recorded
+                      </p>
+                    </div>
+                    
+                    <div>
+                      <h4 className="font-medium">Other Drivers</h4>
+                      <p className="text-muted-foreground">
+                        {collectedInfo?.noOtherDrivers ? 'Single car accident' : 
+                         `${collectedInfo?.otherDrivers?.filter((d: any) => d.name).length || 0} other driver(s)`}
+                      </p>
+                    </div>
+                    
+                    <div>
+                      <h4 className="font-medium">Witnesses</h4>
+                      <p className="text-muted-foreground">
+                        {collectedInfo?.noWitnesses ? 'No witnesses' : 
+                         `${collectedInfo?.witnesses?.filter((w: any) => w.name).length || 0} witness(es)`}
+                      </p>
+                    </div>
+                    
+                    <div>
+                      <h4 className="font-medium">Photos</h4>
+                      <p className="text-muted-foreground">
+                        {collectedInfo?.photos?.filter((p: any) => p.dataUrl).length || 0} photo(s) attached
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </Card>
 
-          {/* Report Summary */}
-          <Card className="p-6 mb-6">
-            <h3 className="font-semibold text-lg mb-4">Report Summary</h3>
-            <div className="space-y-3 text-sm">
-              <div className="flex items-center justify-between">
-                <span className="text-muted-foreground">Date & Time:</span>
-                <span className="font-medium">
-                  {collectedInfo?.accidentDetails?.dateTime 
-                    ? new Date(collectedInfo.accidentDetails.dateTime).toLocaleString()
-                    : `${currentDate} ${currentTime}`
-                  }
-                </span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-muted-foreground">Location:</span>
-                <span className="font-medium">
-                  {collectedInfo?.accidentDetails?.location || 'Not specified'}
-                </span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-muted-foreground">Your Info:</span>
-                <span className="font-medium">
-                  {collectedInfo?.userInfo?.name ? 'Complete' : 'Incomplete'}
-                </span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-muted-foreground">Vehicles:</span>
-                <span className="font-medium">
-                  {collectedInfo?.vehicles?.filter((v: any) => v.make || v.model).length || 0}
-                </span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-muted-foreground">Other Drivers:</span>
-                <span className="font-medium">
-                  {collectedInfo?.noOtherDrivers ? 'None (single car)' : 
-                   collectedInfo?.otherDrivers?.filter((d: any) => d.name).length || 0}
-                </span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-muted-foreground">Witnesses:</span>
-                <span className="font-medium">
-                  {collectedInfo?.noWitnesses ? 'None' :
-                   collectedInfo?.witnesses?.filter((w: any) => w.name).length || 0}
-                </span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-muted-foreground">Photos:</span>
-                <span className="font-medium">
-                  {collectedInfo?.photos?.filter((p: any) => p.dataUrl).length || 0}
-                </span>
-              </div>
-            </div>
-          </Card>
-
-          {/* Report Actions */}
-          <div className="space-y-4 mb-8">
-            {/* Generate Report */}
-            <Card className="p-6 bg-primary/5 border-primary/20">
-              <div className="text-center mb-4">
-                <Download className="w-8 h-8 text-primary mx-auto mb-2" />
-                <h3 className="font-semibold text-lg">Generate PDF Report</h3>
-                <p className="text-sm text-muted-foreground">
-                  Create a comprehensive PDF document with all collected information
-                </p>
-              </div>
-              <PrimaryActionButton onClick={handleGenerateReport} disabled={saving}>
-                {saving ? (
-                  <>
-                    <Clock className="w-5 h-5 mr-2 animate-spin" />
-                    Saving Report...
-                  </>
-                ) : (
-                  <>
-                    <Download className="w-5 h-5 mr-2" />
-                    Generate PDF Report
-                  </>
-                )}
-              </PrimaryActionButton>
-            </Card>
-
-            {/* Share Options */}
-            <Card className="p-6">
-              <h3 className="font-semibold text-lg mb-4">Share Report</h3>
-              <div className="space-y-3">
-                <Button
-                  onClick={handleShareEmail}
-                  variant="outline"
-                  className="w-full justify-start h-12"
-                >
-                  <Mail className="w-5 h-5 mr-3" />
-                  Share via Email
-                </Button>
+              {/* Choose how to proceed */}
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold text-center">Choose how to proceed with your report:</h3>
                 
-                <Button
-                  onClick={handleShareText}
-                  variant="outline"
-                  className="w-full justify-start h-12"
-                >
-                  <MessageSquare className="w-5 h-5 mr-3" />
-                  Share via Text
-                </Button>
-              </div>
-            </Card>
-          </div>
+                <div className="grid gap-4 md:grid-cols-2">
+                  <Card className="cursor-pointer hover:bg-accent/50 transition-colors" onClick={handleCreateAccountAndSave}>
+                    <CardHeader>
+                      <CardTitle className="flex items-center">
+                        <UserPlus className="w-5 h-5 mr-2 text-primary" />
+                        Create Account & Save Report
+                      </CardTitle>
+                      <CardDescription>
+                        Save your report to your account for future access and sharing
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <ul className="text-sm space-y-1 text-muted-foreground">
+                        <li>• Access from any device</li>
+                        <li>• Share easily with links</li>
+                        <li>• Keep organized records</li>
+                        <li>• Download anytime</li>
+                      </ul>
+                    </CardContent>
+                  </Card>
 
-          {/* Completion Actions */}
-          <div className="space-y-4">
-            <Card className="p-4 bg-secondary">
-              <div className="flex items-center space-x-3">
-                <CheckCircle className="w-6 h-6 text-primary flex-shrink-0" />
-                <div className="text-sm">
-                  <p className="font-medium">Report Complete</p>
-                  <p className="text-muted-foreground">
-                    You've successfully documented the accident. Keep this report for your insurance claim.
-                  </p>
+                  <Card className="cursor-pointer hover:bg-accent/50 transition-colors" onClick={handleDownloadOnly}>
+                    <CardHeader>
+                      <CardTitle className="flex items-center">
+                        <Download className="w-5 h-5 mr-2 text-secondary" />
+                        Download PDF Only
+                      </CardTitle>
+                      <CardDescription>
+                        Download the report immediately without creating an account
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <ul className="text-sm space-y-1 text-muted-foreground">
+                        <li>• Quick download</li>
+                        <li>• No account required</li>
+                        <li>• Save to your device</li>
+                        <li className="flex items-center text-orange-600">
+                          <AlertTriangle className="w-3 h-3 mr-1" />
+                          Won't be accessible later
+                        </li>
+                      </ul>
+                    </CardContent>
+                  </Card>
                 </div>
               </div>
+            </>
+          )}
+
+          {step === 'generating' && (
+            <Card>
+              <div className="p-8 text-center">
+                <div className="animate-spin w-8 h-8 border-2 border-primary border-t-transparent rounded-full mx-auto mb-4"></div>
+                <h3 className="text-lg font-semibold mb-2">Generating Your Report</h3>
+                <p className="text-muted-foreground">
+                  {saving ? 'Saving to your account...' : 'Creating your PDF report...'}
+                </p>
+              </div>
             </Card>
+          )}
 
-            {user && (
-              <Button 
-                onClick={() => navigate('/dashboard')}
-                className="w-full h-12"
-              >
-                View My Reports
-              </Button>
-            )}
+          {step === 'completed' && (
+            <>
+              <Card>
+                <div className="p-6">
+                  <div className="flex items-center mb-3">
+                    <CheckCircle className="w-5 h-5 text-green-600 mr-2" />
+                    <h3 className="text-lg font-semibold">Report Complete!</h3>
+                  </div>
+                  <p className="text-sm text-muted-foreground mb-4">
+                    {reportSaved 
+                      ? "Your report has been saved to your account and downloaded to your device."
+                      : "Your report has been downloaded to your device."
+                    }
+                  </p>
+                  
+                  <div className="space-y-2 text-sm">
+                    <div className="flex items-center">
+                      <Clock className="w-4 h-4 mr-2 text-blue-600" />
+                      <span>Consider sharing this report with your insurance company</span>
+                    </div>
+                    <div className="flex items-center">
+                      <MapPin className="w-4 h-4 mr-2 text-blue-600" />
+                      <span>Keep a copy for your records and any potential legal proceedings</span>
+                    </div>
+                  </div>
+                </div>
+              </Card>
 
-            <Button 
-              onClick={onComplete}
-              variant="outline" 
-              className="w-full h-12"
-            >
-              Return to Home
-            </Button>
-          </div>
+              {generatedPDFBlob && (
+                <div className="space-y-4">
+                  <div className="flex gap-3">
+                    <Button 
+                      onClick={handleShareEmail} 
+                      variant="outline" 
+                      className="flex-1"
+                    >
+                      <Mail className="w-4 h-4 mr-2" />
+                      Share via Email
+                    </Button>
+                    <Button 
+                      onClick={handleShareText} 
+                      variant="outline" 
+                      className="flex-1"
+                    >
+                      <MessageSquare className="w-4 h-4 mr-2" />
+                      Share via Text
+                    </Button>
+                  </div>
 
-          {/* Additional Resources */}
-          <Card className="mt-6 p-4 bg-secondary">
-            <div className="text-sm">
-              <p className="font-medium mb-2">Next Steps:</p>
-              <ul className="space-y-1 text-muted-foreground">
-                <li>• Contact your insurance company</li>
-                <li>• Follow up with medical care if needed</li>
-                <li>• Keep all documentation together</li>
-                <li>• Monitor for any delayed symptoms</li>
-              </ul>
-            </div>
-          </Card>
+                  {reportSaved && (
+                    <Button 
+                      onClick={() => navigate('/dashboard')} 
+                      variant="outline" 
+                      className="w-full"
+                    >
+                      View in Dashboard
+                    </Button>
+                  )}
+
+                  {!reportSaved && !user && (
+                    <Card>
+                      <div className="p-4">
+                        <p className="text-sm text-muted-foreground mb-3">
+                          Want to save this report for later access?
+                        </p>
+                        <Button 
+                          onClick={() => setShowAuthModal(true)} 
+                          variant="outline" 
+                          className="w-full"
+                        >
+                          <UserPlus className="w-4 h-4 mr-2" />
+                          Create Account Now
+                        </Button>
+                      </div>
+                    </Card>
+                  )}
+                </div>
+              )}
+
+              {/* Navigation */}
+              <div className="flex gap-3">
+                <Button variant="outline" onClick={() => window.location.href = '/'} className="flex-1">
+                  Back to Home
+                </Button>
+                <Button onClick={onComplete} className="flex-1">
+                  Complete Process
+                </Button>
+              </div>
+            </>
+          )}
         </div>
       </div>
 
       {/* Authentication Modal */}
-      <AuthModal
-        isOpen={showAuthModal}
-        onClose={() => setShowAuthModal(false)}
+      <AuthModal 
+        isOpen={showAuthModal} 
+        onClose={() => {
+          setShowAuthModal(false);
+          setStep('choose');
+        }} 
         onSuccess={handleAuthSuccess}
       />
+
+      <AlertDialog open={showDownloadConfirm} onOpenChange={setShowDownloadConfirm}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center">
+              <AlertTriangle className="w-5 h-5 mr-2 text-orange-500" />
+              Download Without Saving?
+            </AlertDialogTitle>
+            <AlertDialogDescription className="space-y-2">
+              <p>
+                If you download the report without creating an account, you won't be able to:
+              </p>
+              <ul className="list-disc list-inside space-y-1 text-sm">
+                <li>Access the report from other devices</li>
+                <li>Share the report with a link</li>
+                <li>Retrieve the report if you lose the file</li>
+                <li>Keep an organized record of your reports</li>
+              </ul>
+              <p className="font-medium">
+                Are you sure you want to proceed with download only?
+              </p>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Create Account Instead</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDownloadOnly}>
+              Yes, Download Only
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

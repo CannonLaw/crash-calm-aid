@@ -67,18 +67,27 @@ export const AuthModal = ({ isOpen, onClose, onSuccess }: AuthModalProps) => {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="grid grid-cols-3 gap-4 text-center">
-                <div className="space-y-2">
-                  <Archive className="w-6 h-6 mx-auto text-primary" />
-                  <p className="text-xs text-muted-foreground">Save Reports</p>
+              <div className="space-y-4 mb-6">
+                <div className="flex items-center space-x-3">
+                  <Archive className="w-5 h-5 text-primary" />
+                  <div>
+                    <h4 className="font-medium">Save Your Report</h4>
+                    <p className="text-sm text-muted-foreground">Keep your accident report accessible from anywhere</p>
+                  </div>
                 </div>
-                <div className="space-y-2">
-                  <Users className="w-6 h-6 mx-auto text-primary" />
-                  <p className="text-xs text-muted-foreground">Share Easily</p>
+                <div className="flex items-center space-x-3">
+                  <Users className="w-5 h-5 text-primary" />
+                  <div>
+                    <h4 className="font-medium">Share with Links</h4>
+                    <p className="text-sm text-muted-foreground">Send secure links to insurance companies and lawyers</p>
+                  </div>
                 </div>
-                <div className="space-y-2">
-                  <ShieldCheck className="w-6 h-6 mx-auto text-primary" />
-                  <p className="text-xs text-muted-foreground">Secure Access</p>
+                <div className="flex items-center space-x-3">
+                  <ShieldCheck className="w-5 h-5 text-primary" />
+                  <div>
+                    <h4 className="font-medium">Always Available</h4>
+                    <p className="text-sm text-muted-foreground">Never lose your important documentation</p>
+                  </div>
                 </div>
               </div>
             </CardContent>
@@ -178,28 +187,6 @@ export const AuthModal = ({ isOpen, onClose, onSuccess }: AuthModalProps) => {
             </TabsContent>
           </Tabs>
 
-          <div className="space-y-3">
-            <div className="relative">
-              <div className="absolute inset-0 flex items-center">
-                <span className="w-full border-t" />
-              </div>
-              <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-background px-2 text-muted-foreground">Or</span>
-              </div>
-            </div>
-            
-            <Button 
-              variant="outline" 
-              onClick={handleSkip} 
-              className="w-full"
-            >
-              Skip - Download Now
-            </Button>
-          </div>
-
-          <p className="text-xs text-center text-muted-foreground">
-            You can still download and share your report without creating an account
-          </p>
         </div>
       </DialogContent>
     </Dialog>
