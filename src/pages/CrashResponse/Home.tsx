@@ -3,7 +3,10 @@ import { PrimaryActionButton } from "@/components/CrashApp/PrimaryActionButton";
 import { EmergencyButton } from "@/components/CrashApp/EmergencyButton";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { AlertTriangle, FileText, Users, Settings, Phone } from "lucide-react";
+import { AlertTriangle, FileText, Users, Settings, Phone, LogIn } from "lucide-react";
+import { AuthModal } from "@/components/auth/AuthModal";
+import { useAuth } from "@/hooks/useAuth";
+import { useNavigate } from "react-router-dom";
 import logo from "@/assets/crash-genius-logo.png";
 
 interface HomeProps {
@@ -12,6 +15,9 @@ interface HomeProps {
 
 export const Home = ({ onStartCrashReport }: HomeProps) => {
   const [showEmergencyConfirm, setShowEmergencyConfirm] = useState(false);
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const { user } = useAuth();
+  const navigate = useNavigate();
 
   const handleEmergencyCall = () => {
     if (showEmergencyConfirm) {
@@ -19,6 +25,19 @@ export const Home = ({ onStartCrashReport }: HomeProps) => {
       window.open('tel:911');
     } else {
       setShowEmergencyConfirm(true);
+    }
+  };
+
+  const handleAuthSuccess = () => {
+    setShowAuthModal(false);
+    navigate('/dashboard');
+  };
+
+  const handleViewReports = () => {
+    if (user) {
+      navigate('/dashboard');
+    } else {
+      setShowAuthModal(true);
     }
   };
 
@@ -95,7 +114,37 @@ export const Home = ({ onStartCrashReport }: HomeProps) => {
           </Card>
         )}
 
+        {/* User Account Section */}
+        <Card className="p-6">
+          <div className="text-center">
+            <h3 className="text-lg font-semibold mb-2">
+              {user ? 'My Account' : 'Access Your Reports'}
+            </h3>
+            <p className="text-sm text-muted-foreground mb-4">
+              {user 
+                ? 'View your saved accident reports and account details'
+                : 'Sign in to access your saved reports from anywhere'
+              }
+            </p>
+            <Button 
+              onClick={handleViewReports}
+              variant="outline"
+              className="w-full"
+            >
+              <LogIn className="w-5 h-5 mr-2" />
+              {user ? 'View My Reports' : 'Sign In to Account'}
+            </Button>
+          </div>
+        </Card>
+
       </div>
+
+      {/* Authentication Modal */}
+      <AuthModal
+        isOpen={showAuthModal}
+        onClose={() => setShowAuthModal(false)}
+        onSuccess={handleAuthSuccess}
+      />
     </div>
   );
 };

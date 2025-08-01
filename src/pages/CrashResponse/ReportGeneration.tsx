@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { ProgressIndicator } from "@/components/CrashApp/ProgressIndicator";
 import { PrimaryActionButton } from "@/components/CrashApp/PrimaryActionButton";
 import { Button } from "@/components/ui/button";
@@ -31,10 +31,19 @@ export const ReportGeneration = ({ collectedInfo, onComplete }: ReportGeneration
   const currentDate = new Date().toLocaleDateString();
   const currentTime = new Date().toLocaleTimeString();
   const [showAuthModal, setShowAuthModal] = useState(false);
-  const [isReportGenerated, setIsReportGenerated] = useState(false);
+  const [generatedPDFBlob, setGeneratedPDFBlob] = useState<Blob | null>(null);
+  const [pendingSave, setPendingSave] = useState(false);
   const { user } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
+
+  // Auto-save report when user logs in and we have a generated PDF
+  useEffect(() => {
+    if (user && generatedPDFBlob && pendingSave) {
+      saveReportToAccount();
+      setPendingSave(false);
+    }
+  }, [user, generatedPDFBlob, pendingSave]);
 
   const generatePDF = async (): Promise<Blob> => {
     return new Promise(async (resolve, reject) => {
@@ -324,6 +333,9 @@ export const ReportGeneration = ({ collectedInfo, onComplete }: ReportGeneration
       const pdfBlob = await generatePDF();
       const fileName = `accident-report-${currentDate.replace(/\//g, '-')}.pdf`;
       
+      // Store the PDF blob for potential saving
+      setGeneratedPDFBlob(pdfBlob);
+      
       // Create download link
       const url = URL.createObjectURL(pdfBlob);
       const a = document.createElement('a');
@@ -332,9 +344,12 @@ export const ReportGeneration = ({ collectedInfo, onComplete }: ReportGeneration
       a.click();
       URL.revokeObjectURL(url);
       
-      // Mark report as generated and show auth modal if user is not logged in
-      setIsReportGenerated(true);
-      if (!user) {
+      // If user is logged in, save immediately
+      if (user) {
+        await saveReportToAccount();
+      } else {
+        // Show auth modal for potential saving
+        setPendingSave(true);
         setShowAuthModal(true);
       }
     } catch (error) {
@@ -348,7 +363,7 @@ export const ReportGeneration = ({ collectedInfo, onComplete }: ReportGeneration
   };
 
   const saveReportToAccount = async () => {
-    if (!user || !isReportGenerated) return;
+    if (!user || !generatedPDFBlob) return false;
 
     try {
       // Upload PDF and get URL
@@ -385,22 +400,16 @@ export const ReportGeneration = ({ collectedInfo, onComplete }: ReportGeneration
 
   const handleAuthSuccess = async () => {
     setShowAuthModal(false);
-    
-    // Wait a moment for the auth state to update
-    setTimeout(async () => {
-      const success = await saveReportToAccount();
-      if (success) {
-        toast({
-          title: "Welcome!",
-          description: "Your account has been created and your report has been saved.",
-        });
-      }
-    }, 1000);
+    // The useEffect will handle saving automatically when user state updates
+    toast({
+      title: "Welcome!",
+      description: "Your account has been created and your report will be saved.",
+    });
   };
 
   const uploadPDFAndGetLink = async () => {
     try {
-      const pdfBlob = await generatePDF();
+      const pdfBlob = generatedPDFBlob || await generatePDF();
       const fileName = `accident-reports/accident-report-${Date.now()}.pdf`;
       
       // Upload to Supabase Storage
