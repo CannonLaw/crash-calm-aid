@@ -51,12 +51,14 @@ export const ReportGeneration = ({ collectedInfo, onComplete, onGoBack }: Report
     const handleAuthAndSave = async () => {
       // For sign-in: user is immediately available and can proceed with saving
       // For sign-up: user might not be immediately available due to email confirmation
-      if (user && !saving && (step === 'generating' || saveAfterDownload)) {
+      if (user && !saving && step === 'generating') {
         console.log('User authenticated, generating and saving report...');
+        setSaving(true);
+        
         try {
           let pdfBlob = generatedPDFBlob;
           
-          // If we don't have a PDF yet (normal flow) or if we're saving after download, generate it
+          // If we don't have a PDF yet or if we're saving after download, generate it
           if (!pdfBlob || saveAfterDownload) {
             pdfBlob = await generatePDF();
             setGeneratedPDFBlob(pdfBlob);
@@ -94,6 +96,8 @@ export const ReportGeneration = ({ collectedInfo, onComplete, onGoBack }: Report
           console.error('Error generating/saving report:', error);
           setStep('choose');
           setSaveAfterDownload(false);
+        } finally {
+          setSaving(false);
         }
       }
     };
@@ -358,10 +362,9 @@ export const ReportGeneration = ({ collectedInfo, onComplete, onGoBack }: Report
   };
 
   const handleCreateAccountAndSave = () => {
-    setStep('generating');
     if (user) {
-      // User already logged in, proceed directly
-      handleGenerateAndSave();
+      // User already logged in, set step and let useEffect handle the rest
+      setStep('generating');
     } else {
       // Show auth modal with signup tab
       setAuthModalTab('signup');
@@ -370,10 +373,9 @@ export const ReportGeneration = ({ collectedInfo, onComplete, onGoBack }: Report
   };
 
   const handleSignInAndSave = () => {
-    setStep('generating');
     if (user) {
-      // User already logged in, proceed directly
-      handleGenerateAndSave();
+      // User already logged in, set step and let useEffect handle the rest
+      setStep('generating');
     } else {
       // Show auth modal with signin tab
       setAuthModalTab('signin');
@@ -381,32 +383,10 @@ export const ReportGeneration = ({ collectedInfo, onComplete, onGoBack }: Report
     }
   };
 
-  const handleGenerateAndSave = async () => {
-    try {
-      const pdfBlob = await generatePDF();
-      setGeneratedPDFBlob(pdfBlob);
-      
-      const success = await saveReportToAccount(pdfBlob);
-      if (success) {
-        setReportSaved(true);
-        setStep('completed');
-        
-        // Also download for user convenience
-        const currentDate = formatForPDF(new Date()).split(' at ')[0];
-        const fileName = `accident-report-${currentDate.replace(/[,\s]/g, '-')}.pdf`;
-        const url = URL.createObjectURL(pdfBlob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = fileName;
-        a.click();
-        URL.revokeObjectURL(url);
-      } else {
-        setStep('choose');
-      }
-    } catch (error) {
-      console.error('Error generating/saving report:', error);
-      setStep('choose');
-    }
+  // This function is now only used by the auth modal callback
+  const handleAuthModalSuccess = () => {
+    setShowAuthModal(false);
+    setStep('generating');
   };
 
   const handleDownloadOnly = () => {
@@ -829,7 +809,7 @@ export const ReportGeneration = ({ collectedInfo, onComplete, onGoBack }: Report
           setShowAuthModal(false);
           setStep('choose');
         }} 
-        onSuccess={handleAuthSuccess}
+        onSuccess={handleAuthModalSuccess}
         initialTab={authModalTab}
       />
 
