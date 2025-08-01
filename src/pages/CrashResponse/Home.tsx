@@ -132,7 +132,7 @@ export const Home = ({ onStartCrashReport }: HomeProps) => {
               className="w-full"
             >
               <LogIn className="w-5 h-5 mr-2" />
-              {user ? 'View My Reports' : 'Sign In to Account'}
+              {user ? 'Login/Create Account' : 'Sign In to Account'}
             </Button>
           </div>
         </Card>
