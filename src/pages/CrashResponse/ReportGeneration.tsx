@@ -592,10 +592,10 @@ export const ReportGeneration = ({ collectedInfo, onComplete }: ReportGeneration
                 <h3 className="text-lg font-semibold text-center">Choose how to proceed with your report:</h3>
                 
                 <div className="grid gap-4 md:grid-cols-2">
-                  <Card className="cursor-pointer hover:bg-accent/50 transition-colors" onClick={handleCreateAccountAndSave}>
+                  <Card className="cursor-pointer hover:bg-orange-50 border-orange-200 bg-orange-50/50 transition-colors" onClick={handleCreateAccountAndSave}>
                     <CardHeader>
-                      <CardTitle className="flex items-center">
-                        <UserPlus className="w-5 h-5 mr-2 text-primary" />
+                      <CardTitle className="flex items-center text-orange-700">
+                        <UserPlus className="w-5 h-5 mr-2 text-orange-600" />
                         Create Account & Save Report
                       </CardTitle>
                       <CardDescription>
