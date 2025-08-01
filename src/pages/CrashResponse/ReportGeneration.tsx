@@ -50,8 +50,9 @@ export const ReportGeneration = ({ collectedInfo, onComplete, onGoBack }: Report
   // Handle authentication success and save report
   useEffect(() => {
     const handleAuthAndSave = async () => {
-      if (user && showAuthModal && !saving && (step === 'generating' || saveAfterDownload)) {
-        setShowAuthModal(false);
+      // For sign-in: user is immediately available and can proceed with saving
+      // For sign-up: user might not be immediately available due to email confirmation
+      if (user && !saving && (step === 'generating' || saveAfterDownload)) {
         console.log('User authenticated, generating and saving report...');
         try {
           let pdfBlob = generatedPDFBlob;
@@ -65,10 +66,11 @@ export const ReportGeneration = ({ collectedInfo, onComplete, onGoBack }: Report
           const success = await saveReportToAccount(pdfBlob);
           if (success) {
             setReportSaved(true);
+            const wasAfterDownload = saveAfterDownload;
             setSaveAfterDownload(false); // Reset the flag
             
             // If this was a save after download, redirect to dashboard
-            if (saveAfterDownload) {
+            if (wasAfterDownload) {
               toast({
                 title: "Report Saved!",
                 description: "Redirecting to your dashboard...",
@@ -97,7 +99,7 @@ export const ReportGeneration = ({ collectedInfo, onComplete, onGoBack }: Report
     };
 
     handleAuthAndSave();
-  }, [user, showAuthModal, saving, step, saveAfterDownload]);
+  }, [user, saving, step, saveAfterDownload]);
 
   const generatePDF = async (): Promise<Blob> => {
     return new Promise(async (resolve, reject) => {

@@ -47,6 +47,8 @@ export const AuthModal = ({ isOpen, onClose, onSuccess, initialTab = 'signup' }:
     
     const { error } = await signUp(email, password);
     if (!error) {
+      // Close modal immediately after successful signup
+      onClose();
       onSuccess();
     }
   };
@@ -55,6 +57,8 @@ export const AuthModal = ({ isOpen, onClose, onSuccess, initialTab = 'signup' }:
     e.preventDefault();
     const { error } = await signIn(email, password);
     if (!error) {
+      // Close modal immediately after successful signin
+      onClose();
       onSuccess();
     }
   };
