@@ -13,7 +13,8 @@ import {
   Clock,
   MapPin,
   UserPlus,
-  AlertTriangle
+  AlertTriangle,
+  LogIn
 } from "lucide-react";
 import { jsPDF } from "jspdf";
 import headerImage from "@/assets/crash-genius-header.png";
@@ -35,6 +36,7 @@ export const ReportGeneration = ({ collectedInfo, onComplete, onGoBack }: Report
   const currentDate = new Date().toLocaleDateString();
   const currentTime = new Date().toLocaleTimeString();
   const [showAuthModal, setShowAuthModal] = useState(false);
+  const [authModalTab, setAuthModalTab] = useState<'signup' | 'signin'>('signup');
   const [showDownloadConfirm, setShowDownloadConfirm] = useState(false);
   const [generatedPDFBlob, setGeneratedPDFBlob] = useState<Blob | null>(null);
   const [saving, setSaving] = useState(false);
@@ -340,7 +342,20 @@ export const ReportGeneration = ({ collectedInfo, onComplete, onGoBack }: Report
       // User already logged in, proceed directly
       handleGenerateAndSave();
     } else {
-      // Show auth modal
+      // Show auth modal with signup tab
+      setAuthModalTab('signup');
+      setShowAuthModal(true);
+    }
+  };
+
+  const handleSignInAndSave = () => {
+    setStep('generating');
+    if (user) {
+      // User already logged in, proceed directly
+      handleGenerateAndSave();
+    } else {
+      // Show auth modal with signin tab
+      setAuthModalTab('signin');
       setShowAuthModal(true);
     }
   };
@@ -604,22 +619,42 @@ export const ReportGeneration = ({ collectedInfo, onComplete, onGoBack }: Report
               <div className="space-y-4">
                 <h3 className="text-lg font-semibold text-center">Choose how to proceed with your report:</h3>
                 
-                <div className="grid gap-4 md:grid-cols-2">
+                <div className="grid gap-4 md:grid-cols-3">
                   <Card className="cursor-pointer bg-primary/10 border-primary/20 hover:bg-primary/20 transition-colors" onClick={handleCreateAccountAndSave}>
                     <CardHeader>
-                      <CardTitle className="flex items-center text-primary">
+                      <CardTitle className="flex items-center text-primary text-base">
                         <UserPlus className="w-5 h-5 mr-2" />
-                        Create Account & Save Report
+                        Create Account & Save
                       </CardTitle>
-                      <CardDescription className="text-muted-foreground">
-                        Save your report to your account for future access and sharing
+                      <CardDescription className="text-muted-foreground text-sm">
+                        New users: Create account and save report
                       </CardDescription>
                     </CardHeader>
                     <CardContent>
-                      <ul className="text-sm space-y-1 text-muted-foreground">
-                        <li>• Access from any device</li>
-                        <li>• Share easily with links</li>
-                        <li>• Keep organized records</li>
+                      <ul className="text-xs space-y-1 text-muted-foreground">
+                        <li>• Create new account</li>
+                        <li>• Save automatically</li>
+                        <li>• Access from anywhere</li>
+                        <li>• Share with links</li>
+                      </ul>
+                    </CardContent>
+                  </Card>
+
+                  <Card className="cursor-pointer bg-primary/10 border-primary/20 hover:bg-primary/20 transition-colors" onClick={handleSignInAndSave}>
+                    <CardHeader>
+                      <CardTitle className="flex items-center text-primary text-base">
+                        <LogIn className="w-5 h-5 mr-2" />
+                        Sign In & Save
+                      </CardTitle>
+                      <CardDescription className="text-muted-foreground text-sm">
+                        Existing users: Sign in and save report
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <ul className="text-xs space-y-1 text-muted-foreground">
+                        <li>• Use existing account</li>
+                        <li>• Save automatically</li>
+                        <li>• View in dashboard</li>
                         <li>• Download anytime</li>
                       </ul>
                     </CardContent>
@@ -627,22 +662,21 @@ export const ReportGeneration = ({ collectedInfo, onComplete, onGoBack }: Report
 
                   <Card className="cursor-pointer hover:bg-accent/50 transition-colors" onClick={handleDownloadOnly}>
                     <CardHeader>
-                      <CardTitle className="flex items-center">
+                      <CardTitle className="flex items-center text-base">
                         <Download className="w-5 h-5 mr-2 text-secondary" />
-                        Download PDF Only
+                        Download Only
                       </CardTitle>
-                      <CardDescription>
-                        Download the report immediately without creating an account
+                      <CardDescription className="text-sm">
+                        Quick download without account
                       </CardDescription>
                     </CardHeader>
                     <CardContent>
-                      <ul className="text-sm space-y-1 text-muted-foreground">
-                        <li>• Quick download</li>
-                        <li>• No account required</li>
-                        <li>• Save to your device</li>
+                      <ul className="text-xs space-y-1 text-muted-foreground">
+                        <li>• No account needed</li>
+                        <li>• Instant download</li>
                         <li className="flex items-center text-orange-600">
                           <AlertTriangle className="w-3 h-3 mr-1" />
-                          Won't be accessible later
+                          Won't be saved
                         </li>
                       </ul>
                     </CardContent>
@@ -765,6 +799,7 @@ export const ReportGeneration = ({ collectedInfo, onComplete, onGoBack }: Report
           setStep('choose');
         }} 
         onSuccess={handleAuthSuccess}
+        initialTab={authModalTab}
       />
 
       <AlertDialog open={showDownloadConfirm} onOpenChange={setShowDownloadConfirm}>

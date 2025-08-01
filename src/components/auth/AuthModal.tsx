@@ -13,13 +13,14 @@ interface AuthModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSuccess: () => void;
+  initialTab?: 'signup' | 'signin';
 }
 
-export const AuthModal = ({ isOpen, onClose, onSuccess }: AuthModalProps) => {
+export const AuthModal = ({ isOpen, onClose, onSuccess, initialTab = 'signup' }: AuthModalProps) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [activeTab, setActiveTab] = useState('signup');
+  const [activeTab, setActiveTab] = useState(initialTab);
   const [agreeToTerms, setAgreeToTerms] = useState(false);
   const { signUp, signIn } = useAuth();
 
@@ -93,7 +94,7 @@ export const AuthModal = ({ isOpen, onClose, onSuccess }: AuthModalProps) => {
             </CardContent>
           </Card>
 
-          <Tabs value={activeTab} onValueChange={setActiveTab}>
+          <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as 'signup' | 'signin')}>
             <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="signup">Sign Up</TabsTrigger>
               <TabsTrigger value="signin">Sign In</TabsTrigger>
