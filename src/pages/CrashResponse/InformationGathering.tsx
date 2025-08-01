@@ -85,6 +85,18 @@ export const InformationGathering: React.FC<InformationGatheringProps> = ({ onNe
 
   const markSectionComplete = (section: string) => {
     setCompletedSections(prev => ({ ...prev, [section]: true }));
+    
+    // Close current section and open next one
+    setOpenSections(prev => ({ ...prev, [section]: false }));
+    
+    // Find next section to open
+    const sectionIds = sections.map(s => s.id);
+    const currentIndex = sectionIds.indexOf(section);
+    const nextSection = sectionIds[currentIndex + 1];
+    
+    if (nextSection && !completedSections[nextSection]) {
+      setOpenSections(prev => ({ ...prev, [nextSection]: true }));
+    }
   };
 
   const updateOtherDriver = (index: number, field: string, value: string) => {
@@ -656,7 +668,7 @@ export const InformationGathering: React.FC<InformationGatheringProps> = ({ onNe
                         size="sm" 
                         className="mt-4 w-full"
                       >
-                        {isCompleted ? 'Update Section' : 'Mark Complete'}
+                        {isCompleted ? 'Update Section' : 'Save'}
                       </Button>
                     </CollapsibleContent>
                   </Collapsible>
@@ -667,7 +679,7 @@ export const InformationGathering: React.FC<InformationGatheringProps> = ({ onNe
 
           {/* Continue Button */}
           <PrimaryActionButton onClick={() => onNext(collectedInfo)}>
-            Generate Report
+            Finish Report
           </PrimaryActionButton>
 
           <PhotoModal
