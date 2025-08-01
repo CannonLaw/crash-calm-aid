@@ -45,12 +45,16 @@ export const AuthModal = ({ isOpen, onClose, onSuccess, initialTab = 'signup' }:
       return;
     }
     
-    const { error } = await signUp(email, password);
-    if (!error) {
-      // Close modal immediately after successful signup
+    const response = await signUp(email, password);
+    if (!response.error) {
+      // Success: user was created and email confirmation sent
       onClose();
       onSuccess();
+    } else if (response.error?.message === "Account already exists") {
+      // Account exists, suggest switching to sign in
+      setActiveTab('signin');
     }
+    // For other errors, the toast from useAuth will handle the display
   };
 
   const handleSignIn = async (e: React.FormEvent) => {

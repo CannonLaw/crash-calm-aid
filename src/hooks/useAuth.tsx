@@ -43,7 +43,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const signUp = async (email: string, password: string) => {
     const redirectUrl = `${window.location.origin}/`;
     
-    const { error } = await supabase.auth.signUp({
+    const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
@@ -57,14 +57,23 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         description: error.message,
         variant: "destructive",
       });
-    } else {
+    } else if (data.user && !data.user.email_confirmed_at) {
+      // New user created, needs email confirmation
       toast({
         title: "Success",
         description: "Please check your email to confirm your account!",
       });
+    } else if (!data.user) {
+      // No user returned, likely email already exists
+      toast({
+        title: "Account exists",
+        description: "If this email is already registered, please try signing in instead.",
+        variant: "destructive",
+      });
+      return { error: new Error("Account already exists") };
     }
 
-    return { error };
+    return { error, user: data.user };
   };
 
   const signIn = async (email: string, password: string) => {
