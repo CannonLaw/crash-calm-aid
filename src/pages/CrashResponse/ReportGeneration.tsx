@@ -598,7 +598,7 @@ export const ReportGeneration = ({ collectedInfo, onComplete }: ReportGeneration
                         <UserPlus className="w-5 h-5 mr-2" />
                         Create Account & Save Report
                       </CardTitle>
-                      <CardDescription className="text-primary/80">
+                      <CardDescription className="text-muted-foreground">
                         Save your report to your account for future access and sharing
                       </CardDescription>
                     </CardHeader>
