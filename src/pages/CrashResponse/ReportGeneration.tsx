@@ -26,11 +26,12 @@ import { useToast } from "@/hooks/use-toast";
 interface ReportGenerationProps {
   collectedInfo: any;
   onComplete: () => void;
+  onGoBack: () => void;
 }
 
 const stepTitles = ["Safety Check", "Emergency Contacts", "Authorities", "Information", "Report"];
 
-export const ReportGeneration = ({ collectedInfo, onComplete }: ReportGenerationProps) => {
+export const ReportGeneration = ({ collectedInfo, onComplete, onGoBack }: ReportGenerationProps) => {
   const currentDate = new Date().toLocaleDateString();
   const currentTime = new Date().toLocaleTimeString();
   const [showAuthModal, setShowAuthModal] = useState(false);
@@ -586,6 +587,18 @@ export const ReportGeneration = ({ collectedInfo, onComplete }: ReportGeneration
                   </div>
                 </div>
               </Card>
+
+              {/* Edit Report Button */}
+              <div className="text-center">
+                <Button 
+                  variant="outline" 
+                  onClick={onGoBack}
+                  className="flex items-center gap-2"
+                >
+                  <span>←</span>
+                  Go Back to Edit Report
+                </Button>
+              </div>
 
               {/* Choose how to proceed */}
               <div className="space-y-4">

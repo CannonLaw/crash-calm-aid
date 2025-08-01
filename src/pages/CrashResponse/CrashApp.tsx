@@ -48,6 +48,10 @@ export const CrashApp = () => {
     });
   };
 
+  const handleGoBackToInformation = () => {
+    setCurrentState('information');
+  };
+
   const handleLogoClick = () => {
     setCurrentState('home');
     // Reset user responses when returning to home
@@ -76,7 +80,7 @@ export const CrashApp = () => {
       case 'information':
         return <InformationGathering onNext={handleInformationGathering} />;
       case 'report':
-        return <ReportGeneration collectedInfo={userResponses.collectedInfo} onComplete={handleReportComplete} />;
+        return <ReportGeneration collectedInfo={userResponses.collectedInfo} onComplete={handleReportComplete} onGoBack={handleGoBackToInformation} />;
       default:
         return <Home onStartCrashReport={handleStartCrashReport} />;
     }
