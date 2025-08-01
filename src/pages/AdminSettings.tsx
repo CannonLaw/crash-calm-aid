@@ -8,6 +8,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { ArrowLeft, Bell, Save, Trash2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
+import { useIsAdmin } from '@/hooks/useIsAdmin';
 import { toast } from 'sonner';
 
 interface AdminNotification {
@@ -20,6 +21,7 @@ interface AdminNotification {
 const AdminSettings = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { isAdmin, loading: adminLoading } = useIsAdmin();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [adminNotifications, setAdminNotifications] = useState<AdminNotification[]>([]);
@@ -31,8 +33,17 @@ const AdminSettings = () => {
       navigate('/login');
       return;
     }
-    fetchAdminNotifications();
-  }, [user, navigate]);
+
+    if (!adminLoading && !isAdmin) {
+      toast.error('Access denied. Admin privileges required.');
+      navigate('/dashboard');
+      return;
+    }
+
+    if (user && isAdmin) {
+      fetchAdminNotifications();
+    }
+  }, [user, isAdmin, adminLoading, navigate]);
 
   const fetchAdminNotifications = async () => {
     try {
@@ -117,7 +128,7 @@ const AdminSettings = () => {
     }
   };
 
-  if (loading) {
+  if (adminLoading || loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
@@ -126,6 +137,10 @@ const AdminSettings = () => {
         </div>
       </div>
     );
+  }
+
+  if (!isAdmin) {
+    return null; // This will redirect in useEffect
   }
 
   return (

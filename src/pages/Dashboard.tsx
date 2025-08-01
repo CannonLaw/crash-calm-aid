@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
+import { useIsAdmin } from '@/hooks/useIsAdmin';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -20,6 +21,7 @@ interface SavedReport {
 
 const Dashboard = () => {
   const { user, signOut } = useAuth();
+  const { isAdmin } = useIsAdmin();
   const [reports, setReports] = useState<SavedReport[]>([]);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
@@ -111,9 +113,11 @@ const Dashboard = () => {
             <Button onClick={() => navigate('/')} className="bg-primary hover:bg-primary/90">
               Start a New Report
             </Button>
-            <Button variant="outline" onClick={() => navigate('/admin')}>
-              Admin Settings
-            </Button>
+            {isAdmin && (
+              <Button variant="outline" onClick={() => navigate('/admin')}>
+                Admin Settings
+              </Button>
+            )}
             <Button variant="outline" onClick={() => navigate('/')}>
               <ArrowLeft className="w-4 h-4 mr-2" />
               Back to App
