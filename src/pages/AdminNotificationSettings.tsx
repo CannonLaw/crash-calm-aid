@@ -18,7 +18,7 @@ interface AdminNotification {
   is_active: boolean;
 }
 
-const AdminSettings = () => {
+const AdminNotificationSettings = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { isAdmin, loading: adminLoading } = useIsAdmin();
@@ -149,11 +149,11 @@ const AdminSettings = () => {
         <div className="flex items-center gap-4 mb-8">
           <Button
             variant="outline"
-            onClick={() => navigate('/')}
+            onClick={() => navigate('/admin')}
             className="flex items-center gap-2"
           >
             <ArrowLeft className="w-4 h-4" />
-            Back to Home
+            Back to Dashboard
           </Button>
           <div className="flex items-center gap-2">
             <Bell className="w-6 h-6 text-primary" />
@@ -282,4 +282,4 @@ const AdminSettings = () => {
   );
 };
 
-export default AdminSettings;
+export default AdminNotificationSettings;

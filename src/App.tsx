@@ -8,7 +8,8 @@ import { AuthProvider } from "@/hooks/useAuth";
 import Index from "./pages/Index";
 import Dashboard from "./pages/Dashboard";
 import Login from "./pages/Login";
-import AdminSettings from "./pages/AdminSettings";
+import AdminDashboard from "./pages/AdminDashboard";
+import AdminNotificationSettings from "./pages/AdminNotificationSettings";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -25,7 +26,8 @@ function App() {
               <Route path="/" element={<Index />} />
               <Route path="/login" element={<Login />} />
               <Route path="/dashboard" element={<Dashboard />} />
-              <Route path="/admin" element={<AdminSettings />} />
+              <Route path="/admin" element={<AdminDashboard />} />
+              <Route path="/admin/settings" element={<AdminNotificationSettings />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>

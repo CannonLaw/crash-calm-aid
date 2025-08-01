@@ -115,7 +115,7 @@ const Dashboard = () => {
             </Button>
             {isAdmin && (
               <Button variant="outline" onClick={() => navigate('/admin')}>
-                Admin Settings
+                Admin Dashboard
               </Button>
             )}
             <Button variant="outline" onClick={() => navigate('/')}>
