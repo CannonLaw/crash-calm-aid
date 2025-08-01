@@ -44,9 +44,12 @@ export const SafetyCheck = ({ onNext }: SafetyCheckProps) => {
           {/* Safety Options */}
           <div className="space-y-4 mb-8">
             <Card className="p-6">
-              <h3 className="text-lg font-semibold mb-6 text-center">
+              <h3 className="text-lg font-semibold mb-2 text-center">
                 Are you currently safe?
               </h3>
+              <p className="text-sm text-muted-foreground mb-6 text-center">
+                If not, please move to safety or call 911 before continuing.
+              </p>
               
               <div className="space-y-4">
                 {/* Safe Option */}
@@ -57,20 +60,11 @@ export const SafetyCheck = ({ onNext }: SafetyCheckProps) => {
                   Yes, I'm safe
                 </PrimaryActionButton>
 
-                {/* Need to move Option */}
-                <Button
-                  onClick={() => onNext('moving')}
-                  variant="outline"
-                  className="w-full h-14 text-base font-medium"
-                >
-                  <MoveRight className="w-5 h-5 mr-3" />
-                  I need to move to safety
-                </Button>
-
                 {/* Emergency Option */}
-                <div className="pt-2">
-                  <EmergencyButton onClick={handleEmergencyHelp} />
-                </div>
+                <EmergencyButton 
+                  onClick={handleEmergencyHelp}
+                  className="bg-white text-black border border-gray-300 hover:bg-gray-50"
+                />
               </div>
             </Card>
           </div>
