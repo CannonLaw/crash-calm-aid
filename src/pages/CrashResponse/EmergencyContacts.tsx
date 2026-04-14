@@ -2,6 +2,7 @@ import { useState } from "react";
 import { ProgressIndicator } from "@/components/CrashApp/ProgressIndicator";
 import { PrimaryActionButton } from "@/components/CrashApp/PrimaryActionButton";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { Users, Phone, MessageSquare, ChevronRight } from "lucide-react";
 
@@ -14,32 +15,26 @@ const stepTitles = ["Safety Check", "Emergency Contacts", "Authorities", "Inform
 
 export const EmergencyContacts = ({ onNext, onGoBack }: EmergencyContactsProps) => {
   const [contactNotified, setContactNotified] = useState(false);
-
-  // Mock emergency contact - in real app this would come from user settings
-  const emergencyContact = {
-    name: "Sarah Johnson",
-    relationship: "Spouse",
-    phone: "(555) 123-4567"
-  };
+  const [phoneNumber, setPhoneNumber] = useState('');
 
   const handleCall = () => {
-    window.open('tel:');
+    window.open(`tel:${phoneNumber}`);
     setContactNotified(true);
   };
 
   const handleText = () => {
-    window.open('sms:');
+    window.open(`sms:${phoneNumber}?body=${encodeURIComponent("I've been in a car accident. I'm using the Crash Genius app to document everything. I'll share more details soon.")}`);
     setContactNotified(true);
   };
 
   return (
     <div className="min-h-screen bg-background">
-      <ProgressIndicator 
-        currentStep={2} 
-        totalSteps={5} 
+      <ProgressIndicator
+        currentStep={2}
+        totalSteps={5}
         stepTitles={stepTitles}
       />
-      
+
       <div className="p-4">
         <div className="max-w-md mx-auto">
           {/* Header */}
@@ -57,31 +52,44 @@ export const EmergencyContacts = ({ onNext, onGoBack }: EmergencyContactsProps) 
 
           {/* Emergency Contact Card */}
           <Card className="p-6 mb-6">
+            <div className="space-y-4">
+              <div>
+                <label className="text-sm font-medium mb-1 block">Phone number to contact</label>
+                <Input
+                  placeholder="Enter phone number"
+                  type="tel"
+                  value={phoneNumber}
+                  onChange={(e) => setPhoneNumber(e.target.value)}
+                />
+              </div>
 
-            <div className="space-y-3">
-              <Button
-                onClick={handleCall}
-                variant="outline"
-                className="w-full h-12 text-base"
-              >
-                <Phone className="w-5 h-5 mr-3" />
-                Make a Call
-              </Button>
+              <div className="space-y-3">
+                <Button
+                  onClick={handleCall}
+                  variant="outline"
+                  className="w-full h-12 text-base"
+                  disabled={!phoneNumber.trim()}
+                >
+                  <Phone className="w-5 h-5 mr-3" />
+                  Call This Number
+                </Button>
 
-              <Button
-                onClick={handleText}
-                variant="outline"
-                className="w-full h-12 text-base"
-              >
-                <MessageSquare className="w-5 h-5 mr-3" />
-                Send a Text Message
-              </Button>
+                <Button
+                  onClick={handleText}
+                  variant="outline"
+                  className="w-full h-12 text-base"
+                  disabled={!phoneNumber.trim()}
+                >
+                  <MessageSquare className="w-5 h-5 mr-3" />
+                  Text This Number
+                </Button>
+              </div>
             </div>
 
             {contactNotified && (
               <div className="mt-4 p-3 bg-primary/10 rounded-lg">
                 <p className="text-sm text-primary font-medium text-center">
-                  ✓ Contact action completed
+                  Contact action completed
                 </p>
               </div>
             )}

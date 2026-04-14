@@ -137,6 +137,12 @@ export const Home = ({ onStartCrashReport }: HomeProps) => {
           </div>
         </Card>
 
+        {/* Disclaimer */}
+        <p className="text-xs text-muted-foreground text-center mt-8 mb-4 px-2">
+          Crash Genius is a service provided by Cannon Law, a law firm based in Fort Collins, Colorado. No attorney-client relationship is formed through the use of this service. Each case is unique and previous results are not a guarantee of future results. If you would like to discuss whether we are able to represent you, please visit{' '}
+          <a href="https://www.cannonlaw.com" className="underline">cannonlaw.com</a>{' '}
+          or call (970) 471-7170.
+        </p>
       </div>
 
       {/* Authentication Modal */}

@@ -1,22 +1,23 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { 
-  User, 
-  Users, 
-  Car, 
-  Eye, 
-  Camera, 
-  FileText, 
-  ChevronDown, 
-  ChevronRight, 
-  Plus, 
+import {
+  User,
+  Users,
+  Car,
+  Eye,
+  Camera,
+  FileText,
+  ChevronDown,
+  ChevronRight,
+  Plus,
   Trash2,
   Check,
-  MapPin
+  MapPin,
+  LocateFixed
 } from 'lucide-react';
 import { ProgressIndicator } from '@/components/CrashApp/ProgressIndicator';
 import { PrimaryActionButton } from '@/components/CrashApp/PrimaryActionButton';
@@ -59,6 +60,7 @@ export const InformationGathering: React.FC<InformationGatheringProps> = ({ onNe
   const [completedSections, setCompletedSections] = useState<Record<string, boolean>>({});
   const [selectedPhoto, setSelectedPhoto] = useState<PhotoData | null>(null);
   const [isPhotoModalOpen, setIsPhotoModalOpen] = useState(false);
+  const [locatingUser, setLocatingUser] = useState(false);
   const [collectedInfo, setCollectedInfo] = useState<CollectedInfo>({
     userInfo: {
       name: '',
@@ -80,6 +82,41 @@ export const InformationGathering: React.FC<InformationGatheringProps> = ({ onNe
       dateTime: getCurrentLocalDateTime()
     }
   });
+
+  const detectLocation = () => {
+    if (!navigator.geolocation) return;
+    setLocatingUser(true);
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        const { latitude, longitude } = position.coords;
+        try {
+          const response = await fetch(
+            `https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json`
+          );
+          const data = await response.json();
+          const address = data.display_name || `${latitude.toFixed(6)}, ${longitude.toFixed(6)}`;
+          setCollectedInfo(prev => ({
+            ...prev,
+            accidentDetails: { ...prev.accidentDetails, location: address }
+          }));
+        } catch {
+          setCollectedInfo(prev => ({
+            ...prev,
+            accidentDetails: { ...prev.accidentDetails, location: `${latitude.toFixed(6)}, ${longitude.toFixed(6)}` }
+          }));
+        }
+        setLocatingUser(false);
+      },
+      () => setLocatingUser(false),
+      { enableHighAccuracy: true, timeout: 10000 }
+    );
+  };
+
+  useEffect(() => {
+    if (!collectedInfo.accidentDetails.location) {
+      detectLocation();
+    }
+  }, []);
 
   const toggleSection = (section: string) => {
     setOpenSections(prev => ({ ...prev, [section]: !prev[section] }));
@@ -587,11 +624,23 @@ export const InformationGathering: React.FC<InformationGatheringProps> = ({ onNe
           </div>
           <div>
             <label className="text-sm font-medium mb-1 block">Location</label>
-            <Input
-              placeholder="Street address or intersection"
-              value={collectedInfo.accidentDetails.location}
-              onChange={(e) => updateAccidentDetails('location', e.target.value)}
-            />
+            <div className="flex gap-2">
+              <Input
+                placeholder="Street address or intersection"
+                value={collectedInfo.accidentDetails.location}
+                onChange={(e) => updateAccidentDetails('location', e.target.value)}
+                className="flex-1"
+              />
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={detectLocation}
+                disabled={locatingUser}
+                title="Detect current location"
+              >
+                <LocateFixed className={`w-4 h-4 ${locatingUser ? 'animate-spin' : ''}`} />
+              </Button>
+            </div>
           </div>
           <div>
             <label className="text-sm font-medium mb-1 block">Description</label>
