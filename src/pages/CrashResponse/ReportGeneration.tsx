@@ -83,7 +83,7 @@ export const ReportGeneration = ({ collectedInfo, onComplete, onGoBack }: Report
               // Normal flow - stay on current page and download
               setStep('completed');
               const currentDate = formatForPDF(new Date()).split(' at ')[0];
-              const fileName = `accident-report-${currentDate.replace(/[,\s]/g, '-')}.pdf`;
+              const fileName = `accident-report-${currentDate.replace(/[,\s]+/g, '-')}.pdf`;
               const url = URL.createObjectURL(pdfBlob);
               const a = document.createElement('a');
               a.href = url;
@@ -156,11 +156,11 @@ export const ReportGeneration = ({ collectedInfo, onComplete, onGoBack }: Report
             return false;
           };
 
-          // Helper function to add section with better spacing
+          // Helper function to add section with text wrapping
           const addSection = (title: string, content: string[]) => {
-            const sectionHeight = 20 + (content.length * 6) + 10; // Title + content + spacing
-            addNewPageIfNeeded(sectionHeight);
-            
+            // Estimate section height for page break check
+            addNewPageIfNeeded(30);
+
             pdf.setFontSize(12);
             pdf.setFont('helvetica', 'bold');
             pdf.text(title, margins.left, yPosition);
@@ -168,12 +168,16 @@ export const ReportGeneration = ({ collectedInfo, onComplete, onGoBack }: Report
 
             pdf.setFontSize(10);
             pdf.setFont('helvetica', 'normal');
-            
+
             content.forEach(line => {
-              const lineHeight = 6;
-              addNewPageIfNeeded(lineHeight);
-              pdf.text(line, margins.left, yPosition);
-              yPosition += lineHeight;
+              const lineHeight = 5;
+              // Wrap long lines to fit within content width
+              const wrappedLines = pdf.splitTextToSize(line, contentWidth);
+              wrappedLines.forEach((wrappedLine: string) => {
+                addNewPageIfNeeded(lineHeight);
+                pdf.text(wrappedLine, margins.left, yPosition);
+                yPosition += lineHeight;
+              });
             });
             yPosition += 8; // Section spacing
           };
@@ -402,7 +406,7 @@ export const ReportGeneration = ({ collectedInfo, onComplete, onGoBack }: Report
       setGeneratedPDFBlob(pdfBlob);
       
       const currentDate = formatForPDF(new Date()).split(' at ')[0];
-      const fileName = `accident-report-${currentDate.replace(/[,\s]/g, '-')}.pdf`;
+      const fileName = `accident-report-${currentDate.replace(/[,\s]+/g, '-')}.pdf`;
       const url = URL.createObjectURL(pdfBlob);
       const a = document.createElement('a');
       a.href = url;
