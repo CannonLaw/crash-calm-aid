@@ -579,7 +579,6 @@ export const ReportGeneration = ({ collectedInfo, onComplete, onGoBack }: Report
             reportFlowCompleted: true,
             reportSummarySnapshot: reportSummarySnapshot(),
           });
-          trackEvent('email_captured', { lead_id: leadResult.leadId });
 
           if (!leadResult.ok) {
             toast({
@@ -589,6 +588,8 @@ export const ReportGeneration = ({ collectedInfo, onComplete, onGoBack }: Report
             });
             return;
           }
+
+          trackEvent('email_captured', { lead_id: leadResult.leadId });
 
           const emailResult = await sendReportByEmail(email, pdfBlob, fileName, leadResult.leadId);
           if (!emailResult.ok) {
@@ -666,8 +667,9 @@ export const ReportGeneration = ({ collectedInfo, onComplete, onGoBack }: Report
       reportFlowCompleted: true,
       reportSummarySnapshot: reportSummarySnapshot(),
     });
-    trackEvent('phone_captured', { lead_id: result.leadId });
-    if (!result.ok) {
+    if (result.ok) {
+      trackEvent('phone_captured', { lead_id: result.leadId });
+    } else {
       toast({
         title: "Couldn't save your number",
         description: "Please call us at (970) 471-7170 if you'd like to talk.",

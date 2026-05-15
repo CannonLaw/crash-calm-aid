@@ -26,7 +26,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const handleIdentity = (nextSession: Session | null) => {
       const nextUserId = nextSession?.user?.id ?? null;
       if (nextUserId && nextUserId !== identifiedUserIdRef.current) {
-        identifyUser(nextUserId, { email: nextSession?.user?.email });
+        // Identify with the opaque user id only; we deliberately do not send
+        // the email as a PostHog trait. Per-user funnels still work via id.
+        identifyUser(nextUserId);
         identifiedUserIdRef.current = nextUserId;
       }
       if (!nextUserId && identifiedUserIdRef.current) {

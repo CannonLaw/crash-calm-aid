@@ -25,25 +25,9 @@ export interface SubmitLeadInput {
   reportSummarySnapshot?: Record<string, unknown>;
 }
 
-export interface SubmitLeadResult {
-  ok: boolean;
-  leadId?: string;
-  error?: string;
-}
-
-const fireZapierWebhook = (payload: Record<string, unknown>): void => {
-  const url = import.meta.env.VITE_ZAPIER_LEADS_WEBHOOK_URL;
-  if (!url) return;
-  // Fire and forget: never block the user's flow on Zapier.
-  fetch(url, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload),
-    keepalive: true,
-  }).catch((err) => {
-    console.error('Zapier webhook failed', err);
-  });
-};
+export type SubmitLeadResult =
+  | { ok: true; leadId: string }
+  | { ok: false; error: string };
 
 export const submitLead = async (
   input: SubmitLeadInput
@@ -55,7 +39,7 @@ export const submitLead = async (
   const utms = getUtms();
   const sessionId = getOrCreateSessionId();
 
-  const row = {
+  const payload = {
     email: input.email ?? null,
     phone: input.phone ?? null,
     capture_channel: input.captureChannel,
@@ -72,31 +56,26 @@ export const submitLead = async (
     report_summary_snapshot: input.reportSummarySnapshot ?? null,
   };
 
-  const { data, error } = await supabase
-    .from('leads')
-    .insert(row)
-    .select('id')
-    .single();
-
-  if (error || !data) {
-    console.error('Lead insert failed', error);
-    return { ok: false, error: error?.message ?? 'Insert failed' };
-  }
-
-  fireZapierWebhook({
-    lead_id: data.id,
-    ...row,
-    created_at: new Date().toISOString(),
+  const { data, error } = await supabase.functions.invoke('submit-lead', {
+    body: payload,
   });
 
-  return { ok: true, leadId: data.id };
+  if (error) {
+    console.error('submit-lead invocation failed', error);
+    return { ok: false, error: error.message };
+  }
+  const result = data as { ok?: boolean; lead_id?: string; error?: string } | null;
+  if (!result || !result.ok || !result.lead_id) {
+    return { ok: false, error: result?.error ?? 'Submit failed' };
+  }
+  return { ok: true, leadId: result.lead_id };
 };
 
 export const sendReportByEmail = async (
   to: string,
   pdfBlob: Blob,
   filename: string,
-  leadId?: string
+  leadId: string
 ): Promise<{ ok: boolean; error?: string }> => {
   const pdfBase64 = await blobToBase64(pdfBlob);
   const { data, error } = await supabase.functions.invoke('send-report-email', {
