@@ -139,6 +139,7 @@ export const ReportGeneration = ({ collectedInfo, onComplete, onGoBack }: Report
   });
 
   const generatePDF = async (): Promise<Blob> => {
+    // eslint-disable-next-line no-async-promise-executor
     return new Promise(async (resolve, reject) => {
       const pdf = new jsPDF();
       const pageWidth = pdf.internal.pageSize.width;
