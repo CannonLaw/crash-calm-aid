@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Header } from "@/components/Header";
 import { Home } from "./Home";
 import { SafetyCheck } from "./SafetyCheck";
@@ -6,6 +6,7 @@ import { EmergencyContacts } from "./EmergencyContacts";
 import { Authorities } from "./Authorities";
 import { InformationGathering } from "./InformationGathering";
 import { ReportGeneration } from "./ReportGeneration";
+import { trackEvent } from "@/lib/analytics";
 
 type AppState = 'home' | 'safety-check' | 'emergency-contacts' | 'authorities' | 'information' | 'report';
 
@@ -17,23 +18,34 @@ export const CrashApp = () => {
     authoritiesChoice: '',
     collectedInfo: {}
   });
+  const appEntryFired = useRef(false);
+
+  useEffect(() => {
+    if (appEntryFired.current) return;
+    appEntryFired.current = true;
+    trackEvent('app_entry');
+  }, []);
 
   const handleStartCrashReport = () => {
+    trackEvent('step_1_safety_started');
     setCurrentState('safety-check');
   };
 
   const handleSafetyCheck = (safetyStatus: 'safe' | 'moving' | 'emergency') => {
     setUserResponses(prev => ({ ...prev, safetyStatus }));
+    trackEvent('step_2_emergency_started', { safetyStatus });
     setCurrentState('emergency-contacts');
   };
 
   const handleAuthorities = (authoritiesChoice: 'emergency' | 'non-emergency' | 'skip') => {
     setUserResponses(prev => ({ ...prev, authoritiesChoice }));
+    trackEvent('step_4_information_started', { authoritiesChoice });
     setCurrentState('information');
   };
 
   const handleInformationGathering = (collectedInfo: any) => {
     setUserResponses(prev => ({ ...prev, collectedInfo }));
+    trackEvent('step_4_information_completed');
     setCurrentState('report');
   };
 
@@ -69,6 +81,7 @@ export const CrashApp = () => {
   };
 
   const handleEmergencyContacts = () => {
+    trackEvent('step_3_authorities_started');
     setCurrentState('authorities');
   };
 

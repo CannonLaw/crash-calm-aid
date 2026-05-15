@@ -1,7 +1,8 @@
-import { useState, useEffect, createContext, useContext } from 'react';
+import { useState, useEffect, createContext, useContext, useRef } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { trackEvent, identifyUser, resetAnalyticsIdentity } from '@/lib/analytics';
 
 interface AuthContextType {
   user: User | null;
@@ -19,14 +20,28 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
+  const identifiedUserIdRef = useRef<string | null>(null);
 
   useEffect(() => {
+    const handleIdentity = (nextSession: Session | null) => {
+      const nextUserId = nextSession?.user?.id ?? null;
+      if (nextUserId && nextUserId !== identifiedUserIdRef.current) {
+        identifyUser(nextUserId, { email: nextSession?.user?.email });
+        identifiedUserIdRef.current = nextUserId;
+      }
+      if (!nextUserId && identifiedUserIdRef.current) {
+        resetAnalyticsIdentity();
+        identifiedUserIdRef.current = null;
+      }
+    };
+
     // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
         setSession(session);
         setUser(session?.user ?? null);
         setLoading(false);
+        handleIdentity(session);
       }
     );
 
@@ -35,6 +50,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       setSession(session);
       setUser(session?.user ?? null);
       setLoading(false);
+      handleIdentity(session);
     });
 
     return () => subscription.unsubscribe();
@@ -59,6 +75,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       });
     } else if (data.user && !data.user.email_confirmed_at) {
       // New user created, needs email confirmation
+      trackEvent('account_created', { userId: data.user.id });
       toast({
         title: "Success",
         description: "Please check your email to confirm your account!",
