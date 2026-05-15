@@ -6,7 +6,7 @@ import { Card } from "@/components/ui/card";
 import { Shield, AlertTriangle, MoveRight } from "lucide-react";
 
 interface SafetyCheckProps {
-  onNext: (safetyStatus: 'safe' | 'moving' | 'emergency') => void;
+  onNext: (safetyStatus: 'safe' | 'emergency') => void;
   onGoBack: () => void;
 }
 

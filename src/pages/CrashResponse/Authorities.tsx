@@ -3,7 +3,7 @@ import { PrimaryActionButton } from "@/components/CrashApp/PrimaryActionButton";
 import { EmergencyButton } from "@/components/CrashApp/EmergencyButton";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Badge, ShieldCheck, Phone, MapPin } from "lucide-react";
+import { Badge, ShieldCheck, Phone } from "lucide-react";
 
 interface AuthoritiesProps {
   onNext: (authoritiesChoice: 'emergency' | 'non-emergency' | 'skip') => void;

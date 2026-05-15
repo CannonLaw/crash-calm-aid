@@ -253,8 +253,10 @@ export const ReportGeneration = ({ collectedInfo, onComplete, onGoBack }: Report
           // Vehicles section
           const vehicles = collectedInfo?.vehicles?.filter((v: any) => v.make || v.model) || [];
           const vehicleDetails = [];
-          
-          if (vehicles.length === 0) {
+
+          if (collectedInfo?.noOtherVehicles) {
+            vehicleDetails.push('Single car accident - only the reporting driver\'s vehicle was involved');
+          } else if (vehicles.length === 0) {
             vehicleDetails.push('No vehicle information recorded');
           } else {
             vehicles.forEach((vehicle: any, index: number) => {
@@ -570,28 +572,37 @@ export const ReportGeneration = ({ collectedInfo, onComplete, onGoBack }: Report
 
       // Persist the lead and send the email in the background; UI transitions immediately.
       (async () => {
-        const leadResult = await submitLead({
-          email,
-          captureChannel: 'email-screen-a',
-          reportFlowCompleted: true,
-          reportSummarySnapshot: reportSummarySnapshot(),
-        });
-        trackEvent('email_captured', { lead_id: leadResult.leadId });
-
-        if (!leadResult.ok) {
-          toast({
-            title: "Couldn't save your email",
-            description: "Your PDF was downloaded to this device. We weren't able to email a copy.",
-            variant: "destructive",
+        try {
+          const leadResult = await submitLead({
+            email,
+            captureChannel: 'email-screen-a',
+            reportFlowCompleted: true,
+            reportSummarySnapshot: reportSummarySnapshot(),
           });
-          return;
-        }
+          trackEvent('email_captured', { lead_id: leadResult.leadId });
 
-        const emailResult = await sendReportByEmail(email, pdfBlob, fileName, leadResult.leadId);
-        if (!emailResult.ok) {
+          if (!leadResult.ok) {
+            toast({
+              title: "Couldn't save your email",
+              description: "Your PDF was downloaded to this device. We weren't able to email a copy.",
+              variant: "destructive",
+            });
+            return;
+          }
+
+          const emailResult = await sendReportByEmail(email, pdfBlob, fileName, leadResult.leadId);
+          if (!emailResult.ok) {
+            toast({
+              title: "Email send failed",
+              description: "Your report downloaded to this device, but we couldn't email a copy.",
+              variant: "destructive",
+            });
+          }
+        } catch (err) {
+          console.error('Background lead/email submission failed', err);
           toast({
-            title: "Email send failed",
-            description: "Your report downloaded to this device, but we couldn't email a copy.",
+            title: "Couldn't deliver your report by email",
+            description: "Your PDF is on this device. Please try again or call us at (970) 471-7170.",
             variant: "destructive",
           });
         }
@@ -882,28 +893,42 @@ export const ReportGeneration = ({ collectedInfo, onComplete, onGoBack }: Report
               />
 
               {/* Secondary: account options */}
-              <div className="flex flex-wrap justify-center items-center gap-x-3 gap-y-1 text-sm text-muted-foreground pt-1">
-                <span>Want to save reports to an account?</span>
-                <Button
-                  variant="link"
-                  size="sm"
-                  className="px-1 h-auto"
-                  onClick={handleCreateAccountAndSave}
-                >
-                  <UserPlus className="w-4 h-4 mr-1" />
-                  Create account
-                </Button>
-                <span className="text-muted-foreground/60">·</span>
-                <Button
-                  variant="link"
-                  size="sm"
-                  className="px-1 h-auto"
-                  onClick={handleSignInAndSave}
-                >
-                  <LogIn className="w-4 h-4 mr-1" />
-                  Sign in
-                </Button>
-              </div>
+              {user ? (
+                <div className="flex flex-wrap justify-center items-center gap-x-2 gap-y-1 text-sm text-muted-foreground pt-1">
+                  <span>Signed in as {user.email}.</span>
+                  <Button
+                    variant="link"
+                    size="sm"
+                    className="px-1 h-auto"
+                    onClick={handleCreateAccountAndSave}
+                  >
+                    Also save this report to your account
+                  </Button>
+                </div>
+              ) : (
+                <div className="flex flex-wrap justify-center items-center gap-x-3 gap-y-1 text-sm text-muted-foreground pt-1">
+                  <span>Want to save reports to an account?</span>
+                  <Button
+                    variant="link"
+                    size="sm"
+                    className="px-1 h-auto"
+                    onClick={handleCreateAccountAndSave}
+                  >
+                    <UserPlus className="w-4 h-4 mr-1" />
+                    Create account
+                  </Button>
+                  <span className="text-muted-foreground/60">·</span>
+                  <Button
+                    variant="link"
+                    size="sm"
+                    className="px-1 h-auto"
+                    onClick={handleSignInAndSave}
+                  >
+                    <LogIn className="w-4 h-4 mr-1" />
+                    Sign in
+                  </Button>
+                </div>
+              )}
             </>
           )}
 

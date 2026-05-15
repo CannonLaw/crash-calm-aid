@@ -67,10 +67,6 @@ export const AuthModal = ({ isOpen, onClose, onSuccess, initialTab = 'signup' }:
     }
   };
 
-  const handleSkip = () => {
-    onClose();
-  };
-
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-md">

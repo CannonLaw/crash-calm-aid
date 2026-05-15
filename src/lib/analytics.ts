@@ -16,7 +16,10 @@ export const initAnalytics = (): void => {
     capture_pageview: false,
     capture_pageleave: false,
     disable_session_recording: true,
-    persistence: 'localStorage+cookie',
+    // localStorage-only — avoids first-party cookies that could trip cookie
+    // consent rules in some jurisdictions. Trade-off: PostHog can't track
+    // the same user across subdomains, which we don't need.
+    persistence: 'localStorage',
   });
 
   initialized = true;

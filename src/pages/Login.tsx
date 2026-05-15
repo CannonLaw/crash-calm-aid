@@ -29,11 +29,14 @@ const Login = () => {
     if (password !== confirmPassword) {
       return;
     }
-    
-    const { error } = await signUp(email, password);
-    if (!error) {
-      navigate('/dashboard');
-    }
+
+    // Don't navigate here. useAuth.signUp already toasts "Please check your
+    // email to confirm your account!" for confirmation-required projects, and
+    // the user is not actually authenticated until they click the link. The
+    // useEffect on line 21 will redirect once the auth state listener fires.
+    // For projects with email confirmation disabled, the same listener will
+    // redirect as soon as the session is created.
+    await signUp(email, password);
   };
 
   const handleSignIn = async (e: React.FormEvent) => {

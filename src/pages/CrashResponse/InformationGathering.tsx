@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Button } from '@/components/ui/button';
@@ -111,12 +111,6 @@ export const InformationGathering: React.FC<InformationGatheringProps> = ({ onNe
       { enableHighAccuracy: true, timeout: 10000 }
     );
   };
-
-  useEffect(() => {
-    if (!collectedInfo.accidentDetails.location) {
-      detectLocation();
-    }
-  }, []);
 
   const toggleSection = (section: string) => {
     setOpenSections(prev => ({ ...prev, [section]: !prev[section] }));

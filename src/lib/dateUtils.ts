@@ -53,12 +53,23 @@ export const getCurrentLocalDateTime = (): string => {
  */
 export const formatLocalDateTimeForPDF = (datetimeLocalString: string): string => {
   const userTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-  // Create a Date object treating the string as local time
+
+  // Expect YYYY-MM-DDTHH:MM from <input type="datetime-local">. If the input
+  // is malformed (e.g., older saved reports missing the time component),
+  // fall back to formatForPDF rather than crashing on undefined.split().
   const [datePart, timePart] = datetimeLocalString.split('T');
+  if (!datePart || !timePart) {
+    return formatForPDF(datetimeLocalString);
+  }
   const [year, month, day] = datePart.split('-').map(Number);
   const [hour, minute] = timePart.split(':').map(Number);
-  
-  // Create date in local timezone
+  if (
+    !Number.isFinite(year) || !Number.isFinite(month) || !Number.isFinite(day) ||
+    !Number.isFinite(hour) || !Number.isFinite(minute)
+  ) {
+    return formatForPDF(datetimeLocalString);
+  }
+
   const localDate = new Date(year, month - 1, day, hour, minute);
   return formatInTimeZone(localDate, userTimeZone, 'MMMM dd, yyyy \'at\' h:mm a');
 };

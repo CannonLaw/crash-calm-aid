@@ -14,7 +14,6 @@ export const CrashApp = () => {
   const [currentState, setCurrentState] = useState<AppState>('home');
   const [userResponses, setUserResponses] = useState({
     safetyStatus: '',
-    emergencyContactNotified: false,
     authoritiesChoice: '',
     collectedInfo: {}
   });
@@ -31,7 +30,7 @@ export const CrashApp = () => {
     setCurrentState('safety-check');
   };
 
-  const handleSafetyCheck = (safetyStatus: 'safe' | 'moving' | 'emergency') => {
+  const handleSafetyCheck = (safetyStatus: 'safe' | 'emergency') => {
     setUserResponses(prev => ({ ...prev, safetyStatus }));
     trackEvent('step_2_emergency_started', { safetyStatus });
     setCurrentState('emergency-contacts');
@@ -54,7 +53,6 @@ export const CrashApp = () => {
     // Reset user responses for next use
     setUserResponses({
       safetyStatus: '',
-      emergencyContactNotified: false,
       authoritiesChoice: '',
       collectedInfo: {}
     });
@@ -90,7 +88,6 @@ export const CrashApp = () => {
     // Reset user responses when returning to home
     setUserResponses({
       safetyStatus: '',
-      emergencyContactNotified: false,
       authoritiesChoice: '',
       collectedInfo: {}
     });
