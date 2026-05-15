@@ -101,6 +101,63 @@ export type Database = {
         }
         Relationships: []
       }
+      leads: {
+        Row: {
+          id: string
+          created_at: string
+          email: string | null
+          phone: string | null
+          capture_channel: string
+          session_id: string
+          report_flow_completed: boolean
+          utm_source: string | null
+          utm_medium: string | null
+          utm_campaign: string | null
+          utm_content: string | null
+          utm_term: string | null
+          gclid: string | null
+          fbclid: string | null
+          entry_timestamp: string | null
+          report_summary_snapshot: Json | null
+        }
+        Insert: {
+          id?: string
+          created_at?: string
+          email?: string | null
+          phone?: string | null
+          capture_channel: string
+          session_id: string
+          report_flow_completed?: boolean
+          utm_source?: string | null
+          utm_medium?: string | null
+          utm_campaign?: string | null
+          utm_content?: string | null
+          utm_term?: string | null
+          gclid?: string | null
+          fbclid?: string | null
+          entry_timestamp?: string | null
+          report_summary_snapshot?: Json | null
+        }
+        Update: {
+          id?: string
+          created_at?: string
+          email?: string | null
+          phone?: string | null
+          capture_channel?: string
+          session_id?: string
+          report_flow_completed?: boolean
+          utm_source?: string | null
+          utm_medium?: string | null
+          utm_campaign?: string | null
+          utm_content?: string | null
+          utm_term?: string | null
+          gclid?: string | null
+          fbclid?: string | null
+          entry_timestamp?: string | null
+          report_summary_snapshot?: Json | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

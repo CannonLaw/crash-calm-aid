@@ -1,20 +1,16 @@
 import { useState, useEffect } from "react";
 import { ProgressIndicator } from "@/components/CrashApp/ProgressIndicator";
-import { PrimaryActionButton } from "@/components/CrashApp/PrimaryActionButton";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { 
-  FileText, 
-  Download, 
-  Mail, 
-  MessageSquare, 
-  CheckCircle, 
+import { Card } from "@/components/ui/card";
+import {
+  FileText,
+  Mail,
+  MessageSquare,
+  CheckCircle,
   Clock,
   MapPin,
   UserPlus,
-  AlertTriangle,
-  LogIn
+  LogIn,
 } from "lucide-react";
 import { jsPDF } from "jspdf";
 import headerImage from "@/assets/crash-genius-header.png";
@@ -25,6 +21,10 @@ import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { formatForPDF, formatLocalDateTimeForPDF } from "@/lib/dateUtils";
 import { trackEvent } from "@/lib/analytics";
+import { submitLead, sendReportByEmail } from "@/lib/leads";
+import { EmailCaptureScreen } from "@/components/CrashApp/EmailCaptureScreen";
+import { DownloadOnlyScreen } from "@/components/CrashApp/DownloadOnlyScreen";
+import { PhoneCaptureScreen } from "@/components/CrashApp/PhoneCaptureScreen";
 
 interface ReportGenerationProps {
   collectedInfo: any;
@@ -34,13 +34,17 @@ interface ReportGenerationProps {
 
 const stepTitles = ["Safety Check", "Emergency Contacts", "Authorities", "Information", "Report"];
 
+type Step = 'choose' | 'screen-b' | 'generating' | 'phone-capture' | 'completed';
+type CapturePath = 'auth-save' | 'email-screen-a' | 'screen-b-bypass' | null;
+
 export const ReportGeneration = ({ collectedInfo, onComplete, onGoBack }: ReportGenerationProps) => {
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [authModalTab, setAuthModalTab] = useState<'signup' | 'signin'>('signup');
-  const [showDownloadConfirm, setShowDownloadConfirm] = useState(false);
   const [generatedPDFBlob, setGeneratedPDFBlob] = useState<Blob | null>(null);
   const [saving, setSaving] = useState(false);
-  const [step, setStep] = useState<'choose' | 'generating' | 'completed'>('choose');
+  const [submitting, setSubmitting] = useState(false);
+  const [step, setStep] = useState<Step>('choose');
+  const [capturePath, setCapturePath] = useState<CapturePath>(null);
   const [reportSaved, setReportSaved] = useState(false);
   const [saveAfterDownload, setSaveAfterDownload] = useState(false);
   const { user } = useAuth();
@@ -56,7 +60,7 @@ export const ReportGeneration = ({ collectedInfo, onComplete, onGoBack }: Report
     const handleAuthAndSave = async () => {
       // For sign-in: user is immediately available and can proceed with saving
       // For sign-up: user might not be immediately available due to email confirmation
-      if (user && !saving && step === 'generating') {
+      if (user && !saving && step === 'generating' && capturePath === 'auth-save') {
         console.log('User authenticated, generating and saving report...');
         setSaving(true);
         
@@ -109,7 +113,30 @@ export const ReportGeneration = ({ collectedInfo, onComplete, onGoBack }: Report
     };
 
     handleAuthAndSave();
-  }, [user, saving, step, saveAfterDownload]);
+  }, [user, saving, step, saveAfterDownload, capturePath]);
+
+  const buildFileName = (): string => {
+    const currentDate = formatForPDF(new Date()).split(' at ')[0];
+    return `accident-report-${currentDate.replace(/[,\s]+/g, '-')}.pdf`;
+  };
+
+  const triggerLocalDownload = (blob: Blob, fileName: string) => {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = fileName;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const reportSummarySnapshot = () => ({
+    accidentLocation: collectedInfo?.accidentDetails?.location ?? null,
+    accidentDateTime: collectedInfo?.accidentDetails?.dateTime ?? null,
+    vehicleCount: collectedInfo?.vehicles?.filter((v: any) => v.make || v.model).length ?? 0,
+    otherDriverCount: collectedInfo?.otherDrivers?.filter((d: any) => d.name).length ?? 0,
+    witnessCount: collectedInfo?.witnesses?.filter((w: any) => w.name).length ?? 0,
+    photoCount: collectedInfo?.photos?.filter((p: any) => p.dataUrl).length ?? 0,
+  });
 
   const generatePDF = async (): Promise<Blob> => {
     return new Promise(async (resolve, reject) => {
@@ -372,56 +399,74 @@ export const ReportGeneration = ({ collectedInfo, onComplete, onGoBack }: Report
   };
 
   const handleCreateAccountAndSave = () => {
+    setCapturePath('auth-save');
     if (user) {
-      // User already logged in, set step and let useEffect handle the rest
       setStep('generating');
     } else {
-      // Show auth modal with signup tab
       setAuthModalTab('signup');
       setShowAuthModal(true);
     }
   };
 
   const handleSignInAndSave = () => {
+    setCapturePath('auth-save');
     if (user) {
-      // User already logged in, set step and let useEffect handle the rest
       setStep('generating');
     } else {
-      // Show auth modal with signin tab
       setAuthModalTab('signin');
       setShowAuthModal(true);
     }
   };
 
-  // This function is now only used by the auth modal callback
   const handleAuthModalSuccess = () => {
     setShowAuthModal(false);
     setStep('generating');
   };
 
-  const handleDownloadOnly = () => {
-    setShowDownloadConfirm(true);
-  };
-
-  const confirmDownloadOnly = async () => {
-    setShowDownloadConfirm(false);
+  const handleEmailSubmit = async (email: string) => {
+    setSubmitting(true);
+    setCapturePath('email-screen-a');
     setStep('generating');
-    
+
     try {
       const pdfBlob = await generatePDF();
       setGeneratedPDFBlob(pdfBlob);
-      
-      const currentDate = formatForPDF(new Date()).split(' at ')[0];
-      const fileName = `accident-report-${currentDate.replace(/[,\s]+/g, '-')}.pdf`;
-      const url = URL.createObjectURL(pdfBlob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = fileName;
-      a.click();
-      URL.revokeObjectURL(url);
-      trackEvent('report_downloaded', { path: 'download-only' });
+      const fileName = buildFileName();
 
-      setStep('completed');
+      // Download immediately — "Send & Download" promises both, no waiting on the network.
+      triggerLocalDownload(pdfBlob, fileName);
+      trackEvent('report_downloaded', { path: 'email-screen-a' });
+
+      // Persist the lead and send the email in the background; UI transitions immediately.
+      (async () => {
+        const leadResult = await submitLead({
+          email,
+          captureChannel: 'email-screen-a',
+          reportFlowCompleted: true,
+          reportSummarySnapshot: reportSummarySnapshot(),
+        });
+        trackEvent('email_captured', { lead_id: leadResult.leadId });
+
+        if (!leadResult.ok) {
+          toast({
+            title: "Couldn't save your email",
+            description: "Your PDF was downloaded to this device. We weren't able to email a copy.",
+            variant: "destructive",
+          });
+          return;
+        }
+
+        const emailResult = await sendReportByEmail(email, pdfBlob, fileName, leadResult.leadId);
+        if (!emailResult.ok) {
+          toast({
+            title: "Email send failed",
+            description: "Your report downloaded to this device, but we couldn't email a copy.",
+            variant: "destructive",
+          });
+        }
+      })();
+
+      setStep('phone-capture');
     } catch (error) {
       console.error('Error generating PDF:', error);
       toast({
@@ -430,7 +475,70 @@ export const ReportGeneration = ({ collectedInfo, onComplete, onGoBack }: Report
         variant: "destructive",
       });
       setStep('choose');
+      setCapturePath(null);
+    } finally {
+      setSubmitting(false);
     }
+  };
+
+  const handleBypass = () => {
+    trackEvent('bypass_to_download');
+    setStep('screen-b');
+  };
+
+  const handleScreenBDownload = async () => {
+    setSubmitting(true);
+    setCapturePath('screen-b-bypass');
+    setStep('generating');
+
+    try {
+      const pdfBlob = await generatePDF();
+      setGeneratedPDFBlob(pdfBlob);
+      const fileName = buildFileName();
+      triggerLocalDownload(pdfBlob, fileName);
+      trackEvent('report_downloaded', { path: 'screen-b-bypass' });
+      setStep('phone-capture');
+    } catch (error) {
+      console.error('Error generating PDF:', error);
+      toast({
+        title: "Error",
+        description: "Error generating PDF report. Please try again.",
+        variant: "destructive",
+      });
+      setStep('screen-b');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleScreenBBack = () => {
+    setStep('choose');
+    setCapturePath(null);
+  };
+
+  const handlePhoneSubmit = async (phone: string) => {
+    setSubmitting(true);
+    const result = await submitLead({
+      phone,
+      captureChannel: 'phone-post-download',
+      reportFlowCompleted: true,
+      reportSummarySnapshot: reportSummarySnapshot(),
+    });
+    trackEvent('phone_captured', { lead_id: result.leadId });
+    if (!result.ok) {
+      toast({
+        title: "Couldn't save your number",
+        description: "Please call us at (970) 471-7170 if you'd like to talk.",
+        variant: "destructive",
+      });
+    }
+    setSubmitting(false);
+    setStep('completed');
+  };
+
+  const handlePhoneSkip = () => {
+    trackEvent('callback_skipped');
+    setStep('completed');
   };
 
   const saveReportToAccount = async (pdfBlob?: Blob) => {
@@ -625,8 +733,8 @@ export const ReportGeneration = ({ collectedInfo, onComplete, onGoBack }: Report
 
               {/* Edit Report Button */}
               <div className="text-center">
-                <Button 
-                  variant="outline" 
+                <Button
+                  variant="outline"
                   onClick={onGoBack}
                   className="flex items-center gap-2"
                 >
@@ -635,75 +743,53 @@ export const ReportGeneration = ({ collectedInfo, onComplete, onGoBack }: Report
                 </Button>
               </div>
 
-              {/* Choose how to proceed */}
-              <div className="space-y-4">
-                <h3 className="text-lg font-semibold text-center">Choose how to proceed with your report:</h3>
-                
-                <div className="grid gap-4 md:grid-cols-3">
-                  <Card className="cursor-pointer border-2 border-primary/40 bg-primary/8 hover:bg-primary/15 hover:border-primary/60 transition-all duration-200" onClick={handleCreateAccountAndSave}>
-                    <CardHeader>
-                      <CardTitle className="flex items-center text-primary text-base">
-                        <UserPlus className="w-5 h-5 mr-2" />
-                        Create Account & Save
-                      </CardTitle>
-                      <CardDescription className="text-muted-foreground text-sm">
-                        New users: Create account and save report
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      <ul className="text-xs space-y-1 text-muted-foreground">
-                        <li>• Create new account</li>
-                        <li>• Save automatically</li>
-                        <li>• Access from anywhere</li>
-                        <li>• Share with links</li>
-                      </ul>
-                    </CardContent>
-                  </Card>
+              {/* Primary: email capture (Screen A) */}
+              <EmailCaptureScreen
+                onSubmitEmail={handleEmailSubmit}
+                onBypass={handleBypass}
+                busy={submitting}
+              />
 
-                  <Card className="cursor-pointer border-2 border-primary/40 bg-primary/8 hover:bg-primary/15 hover:border-primary/60 transition-all duration-200" onClick={handleSignInAndSave}>
-                    <CardHeader>
-                      <CardTitle className="flex items-center text-primary text-base">
-                        <LogIn className="w-5 h-5 mr-2" />
-                        Sign In & Save
-                      </CardTitle>
-                      <CardDescription className="text-muted-foreground text-sm">
-                        Existing users: Sign in and save report
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      <ul className="text-xs space-y-1 text-muted-foreground">
-                        <li>• Use existing account</li>
-                        <li>• Save automatically</li>
-                        <li>• View in dashboard</li>
-                        <li>• Download anytime</li>
-                      </ul>
-                    </CardContent>
-                  </Card>
-
-                  <Card className="cursor-pointer border-2 border-primary/40 bg-primary/8 hover:bg-primary/15 hover:border-primary/60 transition-all duration-200" onClick={handleDownloadOnly}>
-                    <CardHeader>
-                      <CardTitle className="flex items-center text-primary text-base">
-                        <Download className="w-5 h-5 mr-2" />
-                        Download Only
-                      </CardTitle>
-                      <CardDescription className="text-sm">
-                        Quick download without account
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      <ul className="text-xs space-y-1 text-muted-foreground">
-                        <li>• No account needed</li>
-                        <li>• Instant download</li>
-                        <li className="flex items-center text-orange-600">
-                          <AlertTriangle className="w-3 h-3 mr-1" />
-                          Won't be saved
-                        </li>
-                      </ul>
-                    </CardContent>
-                  </Card>
-                </div>
+              {/* Secondary: account options */}
+              <div className="flex flex-wrap justify-center items-center gap-x-3 gap-y-1 text-sm text-muted-foreground pt-1">
+                <span>Want to save reports to an account?</span>
+                <Button
+                  variant="link"
+                  size="sm"
+                  className="px-1 h-auto"
+                  onClick={handleCreateAccountAndSave}
+                >
+                  <UserPlus className="w-4 h-4 mr-1" />
+                  Create account
+                </Button>
+                <span className="text-muted-foreground/60">·</span>
+                <Button
+                  variant="link"
+                  size="sm"
+                  className="px-1 h-auto"
+                  onClick={handleSignInAndSave}
+                >
+                  <LogIn className="w-4 h-4 mr-1" />
+                  Sign in
+                </Button>
               </div>
             </>
+          )}
+
+          {step === 'screen-b' && (
+            <DownloadOnlyScreen
+              onDownload={handleScreenBDownload}
+              onBack={handleScreenBBack}
+              busy={submitting}
+            />
+          )}
+
+          {step === 'phone-capture' && (
+            <PhoneCaptureScreen
+              onSubmitPhone={handlePhoneSubmit}
+              onSkip={handlePhoneSkip}
+              busy={submitting}
+            />
           )}
 
           {step === 'generating' && (
@@ -816,46 +902,16 @@ export const ReportGeneration = ({ collectedInfo, onComplete, onGoBack }: Report
       </div>
 
       {/* Authentication Modal */}
-      <AuthModal 
-        isOpen={showAuthModal} 
+      <AuthModal
+        isOpen={showAuthModal}
         onClose={() => {
           setShowAuthModal(false);
+          setCapturePath(null);
           setStep('choose');
-        }} 
+        }}
         onSuccess={handleAuthModalSuccess}
         initialTab={authModalTab}
       />
-
-      <AlertDialog open={showDownloadConfirm} onOpenChange={setShowDownloadConfirm}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle className="flex items-center">
-              <AlertTriangle className="w-5 h-5 mr-2 text-orange-500" />
-              Download Without Saving?
-            </AlertDialogTitle>
-            <AlertDialogDescription className="space-y-2">
-              <p>
-                If you download the report without creating an account, you won't be able to:
-              </p>
-              <ul className="list-disc list-inside space-y-1 text-sm">
-                <li>Access the report from other devices</li>
-                <li>Share the report with a link</li>
-                <li>Retrieve the report if you lose the file</li>
-                <li>Keep an organized record of your reports</li>
-              </ul>
-              <p className="font-medium">
-                Are you sure you want to proceed with download only?
-              </p>
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Create Account Instead</AlertDialogCancel>
-            <AlertDialogAction onClick={confirmDownloadOnly}>
-              Yes, Download Only
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </div>
   );
 };
