@@ -383,9 +383,139 @@ export const ReportGeneration = ({ collectedInfo, onComplete, onGoBack }: Report
             }
           }
           
+          // TODO(what-to-do-content): final copy to be supplied by Cannon Law.
+          const whatToDoBlocks: Array<{ heading: string; bullets: string[] }> = [
+            {
+              heading: 'Within 24 hours',
+              bullets: [
+                'See a doctor or visit an urgent care center, even if you feel fine. Some accident injuries take hours or days to appear.',
+                'Notify your insurance company that you were in an accident.',
+                'If you can safely return to the scene, take additional photos of the location, your vehicle, and any injuries.',
+                'Write down everything you remember about the crash while it is still fresh.',
+              ],
+            },
+            {
+              heading: 'Within 7 days',
+              bullets: [
+                'Follow up on any medical advice you received. Keep copies of every appointment, prescription, and bill.',
+                'Request a copy of the police report if one was filed.',
+                'Save repair estimates and any out-of-pocket costs in one place.',
+                "Be cautious about giving a recorded statement to the other driver's insurance company. Many people consult an attorney before doing so.",
+              ],
+            },
+            {
+              heading: 'Ongoing',
+              bullets: [
+                'Keep filling in the 7-day symptom log on the next page.',
+                'Keep all correspondence with insurance companies in writing or by email.',
+                'If you are considering whether you need an attorney, most personal injury firms offer free consultations.',
+              ],
+            },
+          ];
+
+          const addWhatToDoNext = () => {
+            addNewPageIfNeeded(40);
+            pdf.setFontSize(12);
+            pdf.setFont('helvetica', 'bold');
+            pdf.text('What to Do Next', margins.left, yPosition);
+            yPosition += 8;
+
+            whatToDoBlocks.forEach((block, blockIndex) => {
+              addNewPageIfNeeded(12);
+              pdf.setFontSize(10);
+              pdf.setFont('helvetica', 'bold');
+              pdf.text(block.heading, margins.left, yPosition);
+              yPosition += 6;
+
+              pdf.setFont('helvetica', 'normal');
+              block.bullets.forEach((bullet) => {
+                const bulletLines = pdf.splitTextToSize(`• ${bullet}`, contentWidth - 4);
+                bulletLines.forEach((line: string, idx: number) => {
+                  addNewPageIfNeeded(5);
+                  const x = idx === 0 ? margins.left : margins.left + 3;
+                  pdf.text(line, x, yPosition);
+                  yPosition += 5;
+                });
+              });
+
+              if (blockIndex < whatToDoBlocks.length - 1) {
+                yPosition += 3;
+              }
+            });
+            yPosition += 8;
+          };
+
+          const addSymptomLog = () => {
+            // Title block + 7 rows + spacing ≈ 165mm. Force a fresh page so it
+            // prints clean and there's enough room to write in each row.
+            addNewPageIfNeeded(165);
+
+            pdf.setFontSize(14);
+            pdf.setFont('helvetica', 'bold');
+            pdf.text('7-Day Symptom Log', margins.left, yPosition);
+            yPosition += 7;
+
+            pdf.setFontSize(10);
+            pdf.setFont('helvetica', 'italic');
+            const subtitle = pdf.splitTextToSize(
+              'Fill in over the days after your accident. Tracking symptoms helps your doctor and any attorney you consult.',
+              contentWidth
+            );
+            subtitle.forEach((line: string) => {
+              pdf.text(line, margins.left, yPosition);
+              yPosition += 5;
+            });
+            yPosition += 4;
+
+            const tableWidth = contentWidth;
+            const colWidths = [25, 60, 22, tableWidth - 25 - 60 - 22];
+            const colX = [
+              margins.left,
+              margins.left + colWidths[0],
+              margins.left + colWidths[0] + colWidths[1],
+              margins.left + colWidths[0] + colWidths[1] + colWidths[2],
+            ];
+            const headerHeight = 8;
+            const bodyRowHeight = 18;
+            const padX = 2;
+
+            pdf.setDrawColor(120, 120, 120);
+            pdf.setLineWidth(0.2);
+
+            // Header row
+            pdf.setFillColor(245, 245, 245);
+            pdf.rect(margins.left, yPosition, tableWidth, headerHeight, 'F');
+            pdf.rect(margins.left, yPosition, tableWidth, headerHeight, 'S');
+            for (let i = 1; i < 4; i++) {
+              pdf.line(colX[i], yPosition, colX[i], yPosition + headerHeight);
+            }
+            pdf.setFontSize(10);
+            pdf.setFont('helvetica', 'bold');
+            const headers = ['Date', 'Symptoms', 'Severity (1–10)', 'Notes'];
+            const headerTextY = yPosition + 5.5;
+            headers.forEach((h, i) => {
+              pdf.text(h, colX[i] + padX, headerTextY);
+            });
+            yPosition += headerHeight;
+
+            // Body rows
+            pdf.setFont('helvetica', 'normal');
+            for (let r = 0; r < 7; r++) {
+              pdf.rect(margins.left, yPosition, tableWidth, bodyRowHeight, 'S');
+              for (let i = 1; i < 4; i++) {
+                pdf.line(colX[i], yPosition, colX[i], yPosition + bodyRowHeight);
+              }
+              yPosition += bodyRowHeight;
+            }
+            yPosition += 6;
+          };
+
+          addWhatToDoNext();
+          addSymptomLog();
+
           // Add footer to the last page
           addFooter();
-          
+
           // Return the PDF blob
           const blob = pdf.output('blob');
           resolve(blob);
